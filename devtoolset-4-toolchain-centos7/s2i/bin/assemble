@@ -25,3 +25,4 @@ cp -Rf /tmp/src/. ./
 echo "---> Building application from source..."
 # TODO: Add build steps for your application, eg npm install, bundle install, pip install, etc.
 make -C ./
+make clean
