@@ -1,4 +1,4 @@
-IMAGE_NAME = s2i-devtoolset-4-toolchain-centos7
+IMAGE_NAME = 4-toolchain
 
 .PHONY: build
 build:

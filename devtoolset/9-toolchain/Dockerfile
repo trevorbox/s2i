@@ -1,14 +1,17 @@
-# s2i-devtoolset-4-toolchain-centos7
-FROM openshift/base-centos7
+# 9-toolchain
+FROM registry.redhat.io/rhscl/devtoolset-9-toolchain-rhel7
 
 LABEL maintainer="Trevor Box <tbox@redhat.com>"
 
-ENV BUILDER_VERSION devtoolset-4-toolchain-centos7
+ENV BUILDER_VERSION devtoolset-9-toolchain-rhel7
 
 LABEL io.k8s.description="Platform for building C++ Apps" \
-      io.k8s.display-name="builder devtoolset-4-toolchain-centos7" \
+      io.k8s.display-name="builder devtoolset-9-toolchain-rhel7" \
       io.openshift.expose-services="8080:http" \
-      io.openshift.tags="builder,devtoolset-4-toolchain-centos7"
+      io.openshift.tags="builder,devtoolset-9-toolchain-rhel7" \
+      io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
+
+USER 0
 
 RUN yum install -y \
   make \

@@ -40,19 +40,19 @@ Create a *usage* script that will print out instructions on how to use the image
 Make sure that all of the scripts are executable by running *chmod +x s2i/bin/**
 
 #### Create the builder image
-The following command will create a builder image named s2i-devtoolset-4-toolchain-centos7 based on the Dockerfile that was created previously.
+The following command will create a builder image named 4-toolchain based on the Dockerfile that was created previously.
 ```
-docker build -t s2i-devtoolset-4-toolchain-centos7 .
+docker build -t 4-toolchain .
 ```
 The builder image can also be created by using the *make* command since a *Makefile* is included.
 
-Once the image has finished building, the command *s2i usage s2i-devtoolset-4-toolchain-centos7* will print out the help info that was defined in the *usage* script.
+Once the image has finished building, the command *s2i usage 4-toolchain* will print out the help info that was defined in the *usage* script.
 
 #### Testing the builder image
 The builder image can be tested using the following commands:
 ```
-docker build -t s2i-devtoolset-4-toolchain-centos7-candidate .
-IMAGE_NAME=s2i-devtoolset-4-toolchain-centos7-candidate test/run
+docker build -t 4-toolchain-candidate .
+IMAGE_NAME=4-toolchain-candidate test/run
 ```
 The builder image can also be tested by using the *make test* command since a *Makefile* is included.
 
@@ -60,7 +60,7 @@ The builder image can also be tested by using the *make test* command since a *M
 The application image combines the builder image with your applications source code, which is served using whatever application is installed via the *Dockerfile*, compiled using the *assemble* script, and run using the *run* script.
 The following command will create the application image:
 ```
-s2i build test/test-app s2i-devtoolset-4-toolchain-centos7 s2i-devtoolset-4-toolchain-centos7-app
+s2i build test/test-app 4-toolchain 4-toolchain-app
 ---> Building and installing application from source...
 ```
 Using the logic defined in the *assemble* script, s2i will now create an application image using the builder image as a base and including the source code from the test/test-app directory. 
@@ -68,7 +68,7 @@ Using the logic defined in the *assemble* script, s2i will now create an applica
 #### Running the application image
 Running the application image is as simple as invoking the docker run command:
 ```
-docker run -d -p 8080:8080 s2i-devtoolset-4-toolchain-centos7-app
+docker run -d -p 8080:8080 4-toolchain-app
 ```
 The application, which consists of a simple static web page, should now be accessible at  [http://localhost:8080](http://localhost:8080).
 

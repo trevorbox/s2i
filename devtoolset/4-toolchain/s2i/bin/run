@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# S2I run script for the 's2i-devtoolset-4-toolchain-centos7' image.
+# S2I run script for the '4-toolchain' image.
 # The run script executes the server that runs your application.
 #
 # For more information see the documentation:
