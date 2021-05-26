@@ -1,8 +1,8 @@
 # Java S2I Example
 
-A S2I example for building a Java application without ImageStreams.
+This example demonstrates how to use pull and push secrets with a private registry in a BuildConfig.
 
-The BuildConfig pulls a base S2I builder image from, and then pushes the built image back to, Quay.
+The BuildConfig pulls an pushes images to and from Quay.
 
 ## Example BuildConfig
 
