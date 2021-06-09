@@ -15,10 +15,10 @@ export docker_credentials_file=<robot account docker config.json file location>
 export namespace=java-sample
 oc new-project ${namespace}
 oc create secret generic my-pull-secret \
-    --from-file=.dockercfg=${docker_credential_file} \
+    --from-file=.dockercfg=${docker_credentials_file} \
     --type=kubernetes.io/dockercfg -n ${namespace}
 oc create secret generic my-push-secret \
-    --from-file=.dockercfg=${docker_credential_file} \
+    --from-file=.dockercfg=${docker_credentials_file} \
     --type=kubernetes.io/dockercfg -n ${namespace}
 helm upgrade -i java-sample helm/java-sample -n ${namespace}
 ```
