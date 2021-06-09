@@ -15,3 +15,7 @@
 ### Java
 
 [Java S2I Build Example (with BuildConfig pull and push secrets)](./examples/java-s2i)
+
+### Nodejs
+
+[Minimal multi-stage build](./examples/nodejs-minimal)
