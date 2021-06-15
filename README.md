@@ -22,4 +22,4 @@
 
 ### Go
 
-[Micro multi-sate build](./examples/go)
+[Micro multi-stage build](./examples/go)
