@@ -1,5 +1,5 @@
 # Install the app dependencies in a full Node docker image
-FROM registry.access.redhat.com/ubi8/nodejs-14:latest
+FROM registry.access.redhat.com/ubi8/nodejs-14:latest AS builder
 USER root
 # Copying in source code
 COPY app /tmp/src
@@ -15,7 +15,7 @@ FROM registry.access.redhat.com/ubi8/nodejs-14-minimal:latest
 USER root
 WORKDIR "/opt/app-root/src"
 # Install app dependencies
-COPY --from=0 /opt/app-root/src/node_modules ./node_modules
+COPY --from=builder /opt/app-root/src/node_modules ./node_modules
 COPY app .
 # Change file ownership to the assemble user. Builder image must support chown command.
 RUN chown -R 1001:0 .
