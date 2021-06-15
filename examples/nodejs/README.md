@@ -2,7 +2,7 @@
 
 > Note: example application code in the [app/](./app/) folder taken from <https://github.com/sclorg/nodejs-ex.git>
 
-This demonstrates a multi-stage build using the nodejs-14 builder and minimal images which produces an image much smaller than a typical s2i build.
+This demonstrates a multi-stage build using the registry.access.redhat.com/ubi8/nodejs-14 builder and registry.access.redhat.com/ubi8/nodejs-14-minimal images which produces an image much smaller than a typical s2i build.
 
 Build...
 

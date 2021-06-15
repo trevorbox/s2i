@@ -18,4 +18,8 @@
 
 ### Nodejs
 
-[Minimal multi-stage build](./examples/nodejs-minimal)
+[Minimal multi-stage build](./examples/nodejs)
+
+### Go
+
+[Micro multi-sate build](./examples/go)
