@@ -23,6 +23,7 @@ jobs:
         username: ${{ secrets.REGISTRY_REDHAT_IO_USERNAME }}
         password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
         registry: registry.redhat.io
+        logout: false
     - name: Checkout
       uses: actions/checkout@v2
     # Setup S2i and Build container image
