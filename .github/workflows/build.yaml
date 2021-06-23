@@ -15,6 +15,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
 
+    - name: Checkout
+      uses: actions/checkout@v2
+
     - name: Log in to registry.redhat.io
       uses: redhat-actions/podman-login@v1
       with:
@@ -22,10 +25,7 @@ jobs:
         password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
         registry: registry.redhat.io
         logout: false
-
-    - name: Checkout
-      uses: actions/checkout@v2
-
+ 
     # Setup S2i and Build container image
     - name: Setup and Build
       id: build_image
