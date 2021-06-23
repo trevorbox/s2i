@@ -32,7 +32,7 @@ jobs:
       with:
         path_context: './examples/nodejs/app'
         # Builder image for a java project
-        builder_image: 'registry.access.redhat.com/ubi8/nodejs-14'
+        builder_image: 'registry.redhat.io/rhel8/nodejs-14'
         image: ${{ env.IMAGE_NAME }}
         tags: ${{ env.TAGS }}
     # Push Image to Quay registry
