@@ -1,0 +1,47 @@
+name: nodejs-ex
+
+on:
+  push:
+    branches:
+      - actions
+
+env:
+  IMAGE_NAME: nodejs-ex
+  TAGS: latest
+  REGISTRY: quay.io/trevorbox
+  QUAY_IO_USERNAME: ${{ secrets.QUAY_IO_USERNAME }}
+  QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
+  REGISTRY_REDHAT_IO_USERNAME: ${{ secrets.REGISTRY_REDHAT_IO_USERNAME }}
+  REGISTRY_REDHAT_IO_PASSWORD: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
+
+jobs:
+  s2i-build:
+    name: Build and deploy nodejs-ex
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Log in to Red Hat Registry using Docker
+        uses: docker/login-action@v1
+        with:
+          registry: registry.redhat.io
+          username: ${{ env.REGISTRY_REDHAT_IO_USERNAME }}
+          password: ${{ env.REGISTRY_REDHAT_IO_PASSWORD }} 
+      # Setup S2i and Build container image
+      - name: S2i Build
+        id: build_image
+        uses: redhat-actions/s2i-build@v2
+        with:
+          path_context: './examples/nodejs/app'
+          builder_image: 'registry.redhat.io/rhel8/nodejs-14:latest'
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.TAGS }}
+      # Push Image to Quay registry
+      - name: Push To Quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build_image.outputs.image }}
+          tags: ${{ steps.build_image.outputs.tags }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.QUAY_IO_USERNAME }}
+          password: ${{ env.QUAY_IO_PASSWORD }}
