@@ -1,4 +1,4 @@
-name: nodejs-ex
+name: nodejs-ex-s2i
 
 on:
   push:
