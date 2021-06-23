@@ -12,19 +12,18 @@ env:
 jobs:
   s2i-build:
     name: Build and deploy nodejs-ex
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
 
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Log in to registry.redhat.io
+    - name: Log in to Red Hat Registry
       uses: redhat-actions/podman-login@v1
       with:
         username: '11009103|trevorbot'
         password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
         registry: registry.redhat.io
-        logout: false
  
     # Setup S2i and Build container image
     - name: Setup and Build
