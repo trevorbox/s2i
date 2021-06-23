@@ -6,9 +6,6 @@ on:
       - actions
 
 env:
-  IMAGE_REGISTRY: quay.io/trevorbox
-  REGISTRY_USER: ${{ secrets.QUAY_BOT_USERNAME }}
-  REGISTRY_PASSWORD: ${{ secrets.QUAY_BOT_PASSWORD }}
   IMAGE_NAME: nodejs-ex
   TAGS: latest
 
@@ -17,15 +14,18 @@ jobs:
     name: Build and deploy nodejs-ex
     runs-on: ubuntu-20.04
     steps:
+
     - name: Log in to registry.redhat.io
       uses: redhat-actions/podman-login@v1
       with:
-        username: ${{ secrets.REGISTRY_REDHAT_IO_USERNAME }}
+        username: '11009103|trevorbot'
         password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
         registry: registry.redhat.io
         logout: false
+
     - name: Checkout
       uses: actions/checkout@v2
+
     # Setup S2i and Build container image
     - name: Setup and Build
       id: build_image
@@ -35,14 +35,13 @@ jobs:
         builder_image: 'registry.redhat.io/rhel8/nodejs-14:latest'
         image: ${{ env.IMAGE_NAME }}
         tags: ${{ env.TAGS }}
+
     # Push Image to Quay registry
     - name: Push To Quay Action
       uses: redhat-actions/push-to-registry@v2
       with:
         image: ${{ steps.build_image.outputs.image }}
         tags: ${{ steps.build_image.outputs.tags }}
-        registry: ${{ env.IMAGE_REGISTRY }}
-        username: ${{ env.REGISTRY_USER }}
-        password: ${{ env.REGISTRY_PASSWORD }}  
-
-  # Now you can push images, and pull private ones, from quay.io as 'quayuser'.
+        registry: quay.io/trevorbox
+        username: "trevorbox+deployer"
+        password: ${{ secrets.QUAY_BOT_PASSWORD }}
