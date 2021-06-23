@@ -18,9 +18,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Login to Docker Hub
+    - name: Log in to Red Hat Registry using Docker
       uses: docker/login-action@v1
       with:
+        registry: registry.redhat.io
         username: '11009103|trevorbot'
         password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
 
