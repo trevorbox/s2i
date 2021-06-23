@@ -6,8 +6,8 @@ on:
       - actions
 
 env:
-  REGISTRY_USER: ${{ secrets.QUAY_BOT_USERNAME }}
   IMAGE_REGISTRY: quay.io/trevorbox
+  REGISTRY_USER: ${{ secrets.QUAY_BOT_USERNAME }}
   REGISTRY_PASSWORD: ${{ secrets.QUAY_BOT_PASSWORD }}
   IMAGE_NAME: nodejs-ex
   TAGS: latest
@@ -20,9 +20,9 @@ jobs:
     - name: Log in to Quay.io
       uses: redhat-actions/podman-login@v1
       with:
-        username: ${{ env.REGISTRY_USER }}
-        password: ${{ env.REGISTRY_PASSWORD }}
-        registry: ${{ env.IMAGE_REGISTRY }}
+        username: ${{ secrets.REGISTRY_REDHAT_IO_USERNAME }}
+        password: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
+        registry: registry.redhat.io
     - name: Checkout
       uses: actions/checkout@v2
     # Setup S2i and Build container image
