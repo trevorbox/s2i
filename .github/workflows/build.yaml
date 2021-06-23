@@ -17,7 +17,7 @@ jobs:
     name: Build and deploy nodejs-ex
     runs-on: ubuntu-20.04
     steps:
-    - name: Log in to Quay.io
+    - name: Log in to registry.redhat.io
       uses: redhat-actions/podman-login@v1
       with:
         username: ${{ secrets.REGISTRY_REDHAT_IO_USERNAME }}
@@ -32,8 +32,7 @@ jobs:
       uses: redhat-actions/s2i-build@v2
       with:
         path_context: './examples/nodejs/app'
-        # Builder image for a java project
-        builder_image: 'registry.redhat.io/rhel8/nodejs-14'
+        builder_image: 'registry.redhat.io/rhel8/nodejs-14:latest'
         image: ${{ env.IMAGE_NAME }}
         tags: ${{ env.TAGS }}
     # Push Image to Quay registry
