@@ -13,7 +13,7 @@ env:
   QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
   REGISTRY_REDHAT_IO_USERNAME: ${{ secrets.REGISTRY_REDHAT_IO_USERNAME }}
   REGISTRY_REDHAT_IO_PASSWORD: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
-  BASE_IMG_DIR: './examples/nodejs/app'
+  BASE_IMG_DIR: './examples/nodejs'
 
 jobs:
   buildah-build:
@@ -35,7 +35,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.TAGS }}
           context: ${{ env.BASE_IMG_DIR }}
-          dockerfiles: ${{ env.BASE_IMG_DIR }}/Dockerfile
+          dockerfiles: ./Dockerfile
       # Push Image to Quay registry
       - name: Push To Quay
         uses: redhat-actions/push-to-registry@v2
