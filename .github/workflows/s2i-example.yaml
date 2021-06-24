@@ -13,6 +13,8 @@ env:
   QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
   REGISTRY_REDHAT_IO_USERNAME: ${{ secrets.REGISTRY_REDHAT_IO_USERNAME }}
   REGISTRY_REDHAT_IO_PASSWORD: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
+  APP_DIR: './examples/nodejs/app'
+  BUILDER_IMAGE: 'registry.redhat.io/rhel8/nodejs-14:latest'
 
 jobs:
   s2i-build:
@@ -32,8 +34,8 @@ jobs:
         id: build_image
         uses: redhat-actions/s2i-build@v2
         with:
-          path_context: './examples/nodejs/app'
-          builder_image: 'registry.redhat.io/rhel8/nodejs-14:latest'
+          path_context: ${{ env.APP_DIR }}
+          builder_image: ${{ env.BUILDER_IMAGE }}
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.TAGS }}
       # Push Image to Quay registry
