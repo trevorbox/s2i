@@ -15,7 +15,7 @@ env:
   REGISTRY_REDHAT_IO_PASSWORD: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
 
 jobs:
-  s2i-build:
+  buildah-build:
     name: Build and deploy nodejs-ex-minimal
     runs-on: ubuntu-latest
     steps:
@@ -33,8 +33,9 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.TAGS }}
+          content: './examples/nodejs/app'
           dockerfiles: |
-            ./examples/nodejs/app/Dockerfile
+            ./Dockerfile
       # Push Image to Quay registry
       - name: Push To Quay
         uses: redhat-actions/push-to-registry@v2
