@@ -35,7 +35,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.TAGS }}
           context: ${{ env.BASE_IMG_DIR }}
-          dockerfiles: ./Dockerfile
+          dockerfiles: ${{ env.BASE_IMG_DIR }}/Dockerfile
       # Push Image to Quay registry
       - name: Push To Quay
         uses: redhat-actions/push-to-registry@v2
