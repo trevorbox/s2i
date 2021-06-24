@@ -35,7 +35,7 @@ jobs:
           tags: ${{ env.TAGS }}
           content: './examples/nodejs/app'
           dockerfiles: |
-            ./Dockerfile
+            ./examples/nodejs/app/Dockerfile
       # Push Image to Quay registry
       - name: Push To Quay
         uses: redhat-actions/push-to-registry@v2
