@@ -11,8 +11,6 @@ env:
   REGISTRY: quay.io/trevorbox
   QUAY_IO_USERNAME: ${{ secrets.QUAY_IO_USERNAME }}
   QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
-  REGISTRY_REDHAT_IO_USERNAME: ${{ secrets.REGISTRY_REDHAT_IO_USERNAME }}
-  REGISTRY_REDHAT_IO_PASSWORD: ${{ secrets.REGISTRY_REDHAT_IO_PASSWORD }}
   BASE_IMG_DIR: './examples/nodejs'
 
 jobs:
@@ -22,13 +20,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Log in to Red Hat Registry using Podman
-        uses: redhat-actions/podman-login@v1
-        with:
-          registry: registry.redhat.io
-          username: ${{ env.REGISTRY_REDHAT_IO_USERNAME }}
-          password: ${{ env.REGISTRY_REDHAT_IO_PASSWORD }}
-          logout: false
+      # If base image was from private registry, login with podman first 
+      # - name: Log in to Red Hat Registry using Podman
+      #   uses: redhat-actions/podman-login@v1
+      #   with:
+      #     registry: registry.redhat.io
+      #     username: ${{ env.REGISTRY_REDHAT_IO_USERNAME }}
+      #     password: ${{ env.REGISTRY_REDHAT_IO_PASSWORD }}
+      #     logout: false
       - name: Buildah Action
         uses: redhat-actions/buildah-build@v2
         id: buildah
@@ -37,7 +36,6 @@ jobs:
           tags: ${{ env.TAGS }}
           context: ${{ env.BASE_IMG_DIR }}
           dockerfiles: ${{ env.BASE_IMG_DIR }}/Dockerfile
-      # Push Image to Quay registry
       - name: Push To Quay
         uses: redhat-actions/push-to-registry@v2
         with:
