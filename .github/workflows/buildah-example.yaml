@@ -31,6 +31,7 @@ jobs:
           logout: false
       - name: Buildah Action
         uses: redhat-actions/buildah-build@v2
+        id: buildah
         with:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.TAGS }}
@@ -40,8 +41,8 @@ jobs:
       - name: Push To Quay
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ steps.build_image.outputs.image }}
-          tags: ${{ steps.build_image.outputs.tags }}
+          image: ${{ steps.buildah.outputs.image }}
+          tags: ${{ steps.buildah.outputs.tags }}
           registry: ${{ env.REGISTRY }}
           username: ${{ env.QUAY_IO_USERNAME }}
           password: ${{ env.QUAY_IO_PASSWORD }}
