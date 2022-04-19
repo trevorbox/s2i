@@ -23,3 +23,7 @@
 ### Go
 
 [Micro multi-stage build](./examples/go)
+
+### Nginx Angular
+
+[Nginx Angular multi-stage build](./examples/nginx-angular)
