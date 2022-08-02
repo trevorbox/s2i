@@ -2,7 +2,8 @@
 FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
 USER root
 # Copying in source code
-COPY app /tmp/src
+COPY main.go /tmp/src/
+COPY go.mod /tmp/src/
 # Change file ownership to the assemble user. Builder image must support chown command.
 RUN chown -R 1001:0 /tmp/src
 USER 1001

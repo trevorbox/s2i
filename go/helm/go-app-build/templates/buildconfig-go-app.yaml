@@ -39,7 +39,7 @@ spec:
   failedBuildsHistoryLimit: 5
   strategy:
     dockerStrategy:
-      dockerfilePath: go/Dockerfile
+      dockerfilePath: Dockerfile
   postCommit: {}
   source:
     type: Git
