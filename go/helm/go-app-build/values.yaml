@@ -1,0 +1,7 @@
+image:
+  repository: quay.io/trevorbox/go-app
+  # by omitting the image tag parameter, the tag will be based on the Chart.yaml's appVersion
+  # if you want to maintain the chart closely with the application simply omit the image tag parameter. a seprate process is required to update the Chart.yaml for builds
+  tag: v1.1.0
+
+imagePushSecret: 

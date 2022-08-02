@@ -1,0 +1,51 @@
+﻿{{- $appsemver := semver (.Values.image.tag | default .Chart.AppVersion) }}
+{{- $version := printf "%v.%v.%v" $appsemver.Major $appsemver.Minor $appsemver.Patch }}
+{{- $release := printf "%v.%v" $appsemver.Major $appsemver.Minor }}
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: go-app
+  labels:
+    app: go-app
+spec:
+  output:
+    to:
+      kind: DockerImage
+      name: "{{ .Values.image.repository }}:v{{ $version }}"
+    pushSecret:
+      name: go-app-push-secret
+    imageLabels:
+    - name: name
+      value: go-app
+    - name: vendor
+      value: tbox
+    - name: version
+      value: {{ $version | quote }}
+    - name: release
+      value: {{ $release | quote }}
+    - name: summary
+      value: "Go example"
+    - name: description
+      value: "Basic Go api example to demonstrate s2i builds and common practices for deployments"
+    - name: maintainer
+      value: tbox
+  resources: 
+    requests:
+      memory: 1Gi
+      cpu: 300m
+    limits:
+      memory: 2Gi
+  successfulBuildsHistoryLimit: 5
+  failedBuildsHistoryLimit: 5
+  strategy:
+    dockerStrategy:
+      dockerfilePath: go/Dockerfile
+  postCommit: {}
+  source:
+    type: Git
+    git:
+      uri: 'https://github.com/trevorbox/s2i.git'
+    contextDir: go/
+  runPolicy: Serial
+  triggers:
+    - type: ConfigChange
