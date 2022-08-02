@@ -39,3 +39,13 @@ export namespace=test
 helm upgrade -i go-app-build helm/go-app-build -n ${namespace} --create-namespace \
   --set-file imagePushSecret=${docker_credentials_file} 
 ```
+
+# deploy
+
+```sh
+helm upgrade -i go-app helm/go-app-deploy -n ${namespace} --create-namespace \
+  --set nameOverride=go-app \
+  --set ingress.hosts[0].host=go-app-${namespace}.$(oc get ingress.config.openshift.io cluster -o jsonpath={.spec.domain}) \
+  --set ingress.hosts[0].paths[0].path="/" \
+  --set ingress.hosts[0].paths[0].pathType="ImplementationSpecific"
+```
