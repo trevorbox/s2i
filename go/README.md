@@ -7,7 +7,16 @@ This demonstrates a multi-stage build using the registry.access.redhat.com/ubi8/
 Build...
 
 ```sh
-podman build . -t golang-ex
+podman build -t golang-ex . \
+  --build-arg git_origin_url=$(git config --get remote.origin.url) \
+  --build-arg git_revision=$(git rev-parse HEAD) \
+  --build-arg base_image_digest=$(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi8/go-toolset:latest) \
+  --build-arg base_image_name=$(skopeo inspect --format "{{ .Name }}" docker://registry.access.redhat.com/ubi8/go-toolset:latest) \
+  --build-arg src_version=$(git rev-parse --abbrev-ref HEAD) \
+  --build-arg created=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+  --build-arg author_emails="myorg@example.com" \
+  --build-arg build_host=$(uname -n) \
+  --build-arg build_id="1337"
 ```
 
 Run...
