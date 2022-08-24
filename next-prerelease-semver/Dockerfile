@@ -17,5 +17,6 @@ FROM registry.access.redhat.com/ubi9/skopeo:latest
 USER root
 WORKDIR "/opt/app-root"
 # Install app dependencies
-COPY --from=builder /opt/app-root/gobinary .
+COPY --from=builder /opt/app-root/gobinary next-prerelease-semver
 
+CMD /opt/app-root/next-prerelease-semver

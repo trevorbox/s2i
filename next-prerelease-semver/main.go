@@ -21,15 +21,31 @@ type ListTags struct {
 	Tags       []string `json:"Tags,omitempty"`
 }
 
+var Usage = func() {
+	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+	flag.PrintDefaults()
+	fmt.Fprintln(os.Stderr, "Description: A tool to calculate the next prerelease semver version (ie, MAJOR.MINOR.PATCH-PRERELEASE) based on the")
+	fmt.Fprintln(os.Stderr, "             desired release MAJOR.MINOR.PATCH semver and existing prerelease tags in the remote container repository (queried by skopeo).")
+}
+
 func main() {
-	var releaseFlag = flag.String("release", "0.1.0", "the Major.Minor.Patch release semver to create a new preRelease version from")
-	var repositoryFlag = flag.String("repository", "", "the image repository, for example quay.io/trevorbox/pipeline-test-go")
+
+	var repositoryFlag = flag.String("repository", "", "(required) the image repository, for example quay.io/trevorbox/pipeline-test-go")
+	var releaseFlag = flag.String("release", "0.1.0", "(optional) the MAJOR.MINOR.PATCH \"semver\" release version used to calculate the next prerelease version from remote tags in the repository")
+	var authfileFlag = flag.String("authfile", "", "(optional) path of the authentication file for private registries used by skopeo")
 
 	flag.Parse()
 
 	release, err := semver.NewVersion(*releaseFlag)
 	if err != nil {
-		log.Println(err)
+		log.Printf("ERROR release semver parse error: %s", err)
+		Usage()
+		os.Exit(1)
+	}
+
+	if len(*repositoryFlag) == 0 {
+		log.Print("ERROR repository not specified")
+		Usage()
 		os.Exit(1)
 	}
 
@@ -40,14 +56,21 @@ func main() {
 		PreRelease: semver.PreRelease("0"),
 	}
 
-	cmd := exec.Command("skopeo", "list-tags", "docker://"+*repositoryFlag)
+	var cmd *exec.Cmd
+	if len(*authfileFlag) > 0 {
+		cmd = exec.Command("skopeo", "list-tags", "docker://"+*repositoryFlag, "--authfile", *authfileFlag)
+	} else {
+		cmd = exec.Command("skopeo", "list-tags", "docker://"+*repositoryFlag)
+	}
+
 	cmdOutput := &bytes.Buffer{}
 	cmdErr := &bytes.Buffer{}
 	cmd.Stdout = cmdOutput
 	cmd.Stderr = cmdErr
 	err = cmd.Run()
 	if err != nil {
-		log.Println(cmdErr)
+		log.Printf("ERROR skopeo: %s", err)
+		Usage()
 		os.Exit(1)
 	}
 
