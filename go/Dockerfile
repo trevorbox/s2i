@@ -24,6 +24,10 @@ ARG base_image_name
 # Copy the dependencies into a minimal Node docker image
 FROM ${base_image_name}@${base_image_digest}
 
+# https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
+ARG base_image_digest
+ARG base_image_name
+
 # $(git config --get remote.origin.url)
 ARG git_origin_url
 # $(git rev-parse HEAD)
