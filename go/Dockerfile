@@ -1,5 +1,11 @@
+# $(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi8/ubi-micro:latest)
+ARG base_image_digest
+# $(skopeo inspect --format "{{ .Name }}" docker://registry.access.redhat.com/ubi8/ubi-micro:latest)
+ARG base_image_name
+
 # Install the app dependencies in a full Node docker image
 FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
+
 USER root
 # Copying in source code
 COPY main.go /tmp/src/
@@ -11,17 +17,17 @@ USER 1001
 # If this file does not exist in the image, the build will fail.
 RUN /usr/libexec/s2i/assemble
 
+# https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
+ARG base_image_digest
+ARG base_image_name
+
 # Copy the dependencies into a minimal Node docker image
-FROM registry.access.redhat.com/ubi8/ubi-micro:latest
+FROM ${base_image_name}@${base_image_digest}
 
 # $(git config --get remote.origin.url)
 ARG git_origin_url
 # $(git rev-parse HEAD)
 ARG git_revision
-# $(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi8/go-toolset:latest)
-ARG base_image_digest
-# $(skopeo inspect --format "{{ .Name }}" docker://registry.access.redhat.com/ubi8/go-toolset:latest)
-ARG base_image_name
 # $(git rev-parse --abbrev-ref HEAD)
 # note: this is a a semver git tag typically
 ARG src_version

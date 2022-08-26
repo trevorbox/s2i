@@ -23,6 +23,6 @@ RUN microdnf install -y git && \
 
 WORKDIR "/opt/app-root"
 # Install app dependencies
-COPY --from=builder /opt/app-root/gobinary image-util
+COPY --from=builder /opt/app-root/gobinary next-prerelease-semver
 
-CMD /opt/app-root/image-util
+CMD /opt/app-root/next-prerelease-semver
