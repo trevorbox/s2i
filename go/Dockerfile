@@ -1,7 +1,7 @@
 # $(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi8/ubi-micro:latest)
 ARG base_image_digest
-# $(skopeo inspect --format "{{ .Name }}" docker://registry.access.redhat.com/ubi8/ubi-micro:latest)
-ARG base_image_name
+# example: registry.access.redhat.com/ubi8/ubi-micro
+ARG base_image_repository
 
 # Install the app dependencies in a full Node docker image
 FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
@@ -19,14 +19,18 @@ RUN /usr/libexec/s2i/assemble
 
 # https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
 ARG base_image_digest
-ARG base_image_name
+# example: registry.access.redhat.com/ubi8/ubi-micro
+ARG base_image_repository
 
 # Copy the dependencies into a minimal Node docker image
-FROM ${base_image_name}@${base_image_digest}
+FROM ${base_image_repository}@${base_image_digest}
 
 # https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
 ARG base_image_digest
-ARG base_image_name
+# example: registry.access.redhat.com/ubi8/ubi-micro
+ARG base_image_repository
+# example: latest
+ARG base_image_tag
 
 # $(git config --get remote.origin.url)
 ARG git_origin_url
@@ -49,7 +53,7 @@ LABEL org.opencontainers.image.title=go-app \
     org.opencontainers.image.source=${git_origin_url} \
     org.opencontainers.image.revision=${git_revision} \
     org.opencontainers.image.base.digest=${base_image_digest} \
-    org.opencontainers.image.base.name=${base_image_name} \
+    org.opencontainers.image.base.name=${base_image_repository}:${base_image_tag}} \
     org.opencontainers.image.version=${src_version} \
     org.opencontainers.image.created=${created} \
     org.opencontainers.image.authors=${author_emails} \    
