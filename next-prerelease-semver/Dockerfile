@@ -16,10 +16,9 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
 USER root
 
-RUN microdnf install -y git && \
-    microdnf install -y skopeo && \
-    microdnf clean all -y && \
-  	rm -rf /var/cache/yum
+RUN microdnf install -y skopeo && \
+  microdnf clean all -y && \
+  rm -rf /var/cache/yum
 
 WORKDIR "/opt/app-root"
 # Install app dependencies
