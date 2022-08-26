@@ -1,7 +1,7 @@
 ##@ Build
 
 build: fmt vet ## Build manager binary.
-	go build -o bin/next-prerelease-semver main.go
+	go build -o bin/image-util main.go
 
 fmt: ## Run go fmt against code.
 	go fmt ./...

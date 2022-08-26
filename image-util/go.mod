@@ -1,4 +1,4 @@
-module github.com/trevorbox/s2i/next-prerelease-semver
+module github.com/trevorbox/s2i/image-util
 
 go 1.19
 

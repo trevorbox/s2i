@@ -12,11 +12,17 @@ USER 1001
 # If this file does not exist in the image, the build will fail.
 RUN /usr/libexec/s2i/assemble
 
-FROM registry.access.redhat.com/ubi9/skopeo:latest
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
 USER root
+
+RUN microdnf install -y git && \
+    microdnf install -y skopeo && \
+    microdnf clean all -y && \
+  	rm -rf /var/cache/yum
+
 WORKDIR "/opt/app-root"
 # Install app dependencies
-COPY --from=builder /opt/app-root/gobinary next-prerelease-semver
+COPY --from=builder /opt/app-root/gobinary image-util
 
-CMD /opt/app-root/next-prerelease-semver
+CMD /opt/app-root/image-util
