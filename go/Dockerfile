@@ -1,10 +1,14 @@
-# $(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi8/ubi-micro:latest)
+# $(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi9/go-toolset:latest)
+ARG builder_image_digest
+# example: registry.access.redhat.com/ubi9/go-toolset
+ARG builder_image_repository
+# $(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi9/ubi-micro:latest)
 ARG base_image_digest
-# example: registry.access.redhat.com/ubi8/ubi-micro
+# example: registry.access.redhat.com/ubi9/ubi-micro
 ARG base_image_repository
 
-# Install the app dependencies in a full Node docker image
-FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
+# builder image
+FROM ${builder_image_repository}@${builder_image_digest} AS builder
 
 USER root
 # Copying in source code
@@ -18,18 +22,20 @@ USER 1001
 RUN /usr/libexec/s2i/assemble
 
 # https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
+ARG builder_image_digest
+ARG builder_image_repository
 ARG base_image_digest
-# example: registry.access.redhat.com/ubi8/ubi-micro
 ARG base_image_repository
 
 # Copy the dependencies into a minimal Node docker image
 FROM ${base_image_repository}@${base_image_digest}
 
-# https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
+ARG builder_image_digest
+ARG builder_image_repository
+ARG builder_image_tag
+
 ARG base_image_digest
-# example: registry.access.redhat.com/ubi8/ubi-micro
 ARG base_image_repository
-# example: latest
 ARG base_image_tag
 
 # $(git config --get remote.origin.url)
@@ -58,7 +64,9 @@ LABEL org.opencontainers.image.title=go-app \
     org.opencontainers.image.created=${created} \
     org.opencontainers.image.authors=${author_emails} \    
     com.example.org.context.build-host=${build_host} \
-    com.example.org.context.build-id=${build_id}
+    com.example.org.context.build-id=${build_id} \
+    com.example.org.context.image.builder.digest=${builder_image_digest} \
+    com.example.org.context.image.builder.name=${builder_image_repository}:${builder_image_tag}
 
 USER root
 WORKDIR "/opt/app-root"
