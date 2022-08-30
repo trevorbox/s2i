@@ -10,8 +10,11 @@ Build...
 podman build -t golang-ex . \
   --build-arg git_origin_url=$(git config --get remote.origin.url) \
   --build-arg git_revision=$(git rev-parse HEAD) \
-  --build-arg base_image_digest=$(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi8/ubi-micro:latest) \
-  --build-arg base_image_repository=registry.access.redhat.com/ubi8/ubi-micro \
+  --build-arg builder_image_digest=$(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi9/go-toolset:latest) \
+  --build-arg builder_image_repository=registry.access.redhat.com/ubi9/go-toolset \
+  --build-arg builder_image_tag=latest \
+  --build-arg base_image_digest=$(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi9/ubi-micro:latest) \
+  --build-arg base_image_repository=registry.access.redhat.com/ubi9/ubi-micro \
   --build-arg base_image_tag=latest \
   --build-arg src_version=$(git rev-parse --abbrev-ref HEAD) \
   --build-arg created=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
