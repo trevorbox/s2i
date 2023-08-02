@@ -7,7 +7,17 @@ import (
 	"os"
 )
 
-const defaultHeaders = "{\"ETag\":\"33a64df551425fcc55e4d42a148795d9f25f89d4\",\"X-Powered-By\":\"Go\",\"X-XSS-Protection\":\"0\",\"X-Content-Type-Options\":\"\",\"Set-Cookie\":\"id=a3fWa; Max-Age=2592000\",\"Set-Cookie\":\"id2=a3fWa2; Max-Age=2593000\"}"
+const defaultHeaders = "{\"headers\":[{\"key\":\"X-Powered-By\",\"value\":\"Go\"},{\"key\":\"X-XSS-Protection\",\"value\":\"0\"},{\"key\":\"X-Content-Type-Options\",\"value\":\"\"},{\"key\":\"Set-Cookie\",\"value\":\"id=a3fWa; Max-Age=2592000\"},{\"key\":\"Set-Cookie\",\"value\":\"id=b3fWa; Max-Age=3592000\"}]}"
+
+type Headers struct {
+	Headers []KV
+}
+
+// nested within sbserver response
+type KV struct {
+	Key   string
+	Value string
+}
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	response := os.Getenv("RESPONSE")
@@ -20,13 +30,13 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		responseHeaders = defaultHeaders
 	}
 
-	headers := map[string]string{}
+	headers := &Headers{}
 	if err := json.Unmarshal([]byte(responseHeaders), &headers); err != nil {
 		panic(err)
 	}
 
-	for k, v := range headers {
-		w.Header().Set(k, v)
+	for _, header := range headers.Headers {
+		w.Header().Add(header.Key, header.Value)
 	}
 
 	fmt.Fprintln(w, response)
