@@ -56,6 +56,7 @@ helm upgrade -i go-app-build helm/go-app-build -n ${namespace} --create-namespac
 # deploy
 
 ```sh
+helm upgrade --create-namespace -i golang-ex helm/golang-ex -n golang-ex
 helm upgrade -i go-app helm/go-app-deploy -n ${namespace} --create-namespace \
   --set nameOverride=go-app \
   --set ingress.hosts[0].host=go-app-${namespace}.$(oc get ingress.config.openshift.io cluster -o jsonpath={.spec.domain}) \
