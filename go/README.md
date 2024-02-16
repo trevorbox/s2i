@@ -4,7 +4,7 @@
 
 This demonstrates a multi-stage build using the registry.access.redhat.com/ubi8/go-toolset builder and registry.access.redhat.com/ubi8/micro images which produces an image much smaller than a typical s2i build.
 
-Build...
+Build with ubi-micro...
 
 ```sh
 podman build -t golang-ex . \
@@ -29,15 +29,31 @@ Run...
 podman run -it -p 8080:8080 golang-ex
 ```
 
-Below demonstrates the final image size...
+build/run with scratch...
 
 ```sh
-[tbox@localhost go]$ podman images
-REPOSITORY                                   TAG      IMAGE ID       CREATED              SIZE
-localhost/golang-ex                          latest   5e99b2b0cb85   54 seconds ago       52.7 MB
-<none>                                       <none>   0137df945940   About a minute ago   1.12 GB
-registry.access.redhat.com/ubi8/go-toolset   latest   81acb0c94986   5 weeks ago          1.11 GB
-registry.access.redhat.com/ubi8/ubi-micro    latest   f390b26f6a00   6 weeks ago          39.1 MB
+podman build -f Dockerfile.scratch -t golang-ex-scratch . \
+  --build-arg git_origin_url=$(git config --get remote.origin.url) \
+  --build-arg git_revision=$(git rev-parse HEAD) \
+  --build-arg builder_image_digest=$(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi9/go-toolset:latest) \
+  --build-arg builder_image_repository=registry.access.redhat.com/ubi9/go-toolset \
+  --build-arg builder_image_tag=latest \
+  --build-arg src_version=$(git rev-parse --abbrev-ref HEAD) \
+  --build-arg created=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+  --build-arg author_emails="myorg@example.com" \
+  --build-arg build_host=$(uname -n) \
+  --build-arg build_id="1337"
+podman run --rm -it -p 8080:8080 golang-ex-scratch:latest
+```
+
+Below demonstrates the final image sizes...
+
+```sh
+[tbox@fedora go]$ podman images -f label=org.opencontainers.image.title
+REPOSITORY                   TAG         IMAGE ID      CREATED        SIZE
+localhost/golang-ex-scratch  latest      dcce4f987791  2 minutes ago  4.81 MB
+<none>                       <none>      f21fad1ad572  2 minutes ago  4.93 kB
+localhost/golang-ex          latest      a4da6132b5a1  3 minutes ago  38.2 MB
 ```
 
 # openshift build

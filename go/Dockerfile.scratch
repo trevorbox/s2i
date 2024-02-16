@@ -1,0 +1,56 @@
+# $(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi9/go-toolset:latest)
+ARG builder_image_digest
+# example: registry.access.redhat.com/ubi9/go-toolset
+ARG builder_image_repository
+
+# builder image
+FROM ${builder_image_repository}@${builder_image_digest} AS builder
+WORKDIR /tmp/src/
+COPY main.go .
+COPY go.mod .
+RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags '-s -w' -o /opt/app-root/gobinary *.go
+
+# https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
+ARG builder_image_digest
+ARG builder_image_repository
+
+# Copy the dependencies into a minimal Node docker image
+FROM scratch
+
+ARG builder_image_digest
+ARG builder_image_repository
+ARG builder_image_tag
+
+# $(git config --get remote.origin.url)
+ARG git_origin_url
+# $(git rev-parse HEAD)
+ARG git_revision
+# $(git rev-parse --abbrev-ref HEAD)
+# note: this is a a semver git tag typically
+ARG src_version
+# ${date -u +'%Y-%m-%dT%H:%M:%SZ'}
+ARG created
+# group emails of the team that supports this image
+ARG author_emails
+# the build host url
+ARG build_host
+# a unique id for the build of this image
+ARG build_id
+
+LABEL org.opencontainers.image.title=go-app \
+    org.opencontainers.image.description="An example multi-stage build for go." \
+    org.opencontainers.image.source=${git_origin_url} \
+    org.opencontainers.image.revision=${git_revision} \
+    org.opencontainers.image.base.name=scratch \
+    org.opencontainers.image.version=${src_version} \
+    org.opencontainers.image.created=${created} \
+    org.opencontainers.image.authors=${author_emails} \    
+    com.example.org.context.build-host=${build_host} \
+    com.example.org.context.build-id=${build_id} \
+    com.example.org.context.image.builder.digest=${builder_image_digest} \
+    com.example.org.context.image.builder.name=${builder_image_repository}:${builder_image_tag}
+
+WORKDIR /app
+COPY --from=builder /opt/app-root/gobinary /app/
+EXPOSE 8080
+CMD [ "/app/gobinary" ]
