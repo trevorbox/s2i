@@ -1,0 +1,44 @@
+ARG BUILD_ENV=dnf
+
+FROM registry.access.redhat.com/ubi9/ubi-micro:latest as target
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest as builder-dnf
+
+COPY --from=target / /install-root
+
+ARG DNF_OPTS="--installroot=/install-root --setopt=reposdir=/install-root/etc/yum.repos.d/ --setopt=cachedir=/install-cache/ --setopt=varsdir= --config= --noplugins"
+
+RUN microdnf --nodocs --best --assumeyes --setopt=install_weak_deps=0 install tar gzip unzip
+RUN microdnf ${DNF_OPTS} \
+  --nodocs --best --assumeyes --setopt=install_weak_deps=0 \
+  install java-21-openjdk && microdnf ${DNF_OPTS} clean all && rm /install-root/var/lib/dnf/history*
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest as builder-local
+
+COPY --from=target / /install-root
+
+RUN mkdir -p /jdks && mkdir -p /install-root/jdks/java-21
+# youll need to download this file locally
+ADD java-21-openjdk-21.0.3.0.9-1.portable.jre.x86_64.tar.xz /jdks
+RUN mv /jdks/*/* /install-root/jdks/java-21
+
+FROM builder-${BUILD_ENV} as intermediate
+
+FROM registry.access.redhat.com/ubi9/ubi-micro:latest as jre
+COPY --from=intermediate /install-root /
+ENV JAVA_HOME=/jdks/java-21 
+ENV PATH=/jdks/java-21/bin:$PATH
+
+FROM jre as unpack
+WORKDIR /application
+ARG JAR_FILE=/target/*.jar
+COPY ${JAR_FILE} application.jar
+RUN java -Djarmode=layertools -jar application.jar extract
+
+FROM jre
+WORKDIR /application
+COPY --from=unpack /application/dependencies/ ./
+COPY --from=unpack /application/spring-boot-loader/ ./
+COPY --from=unpack /application/snapshot-dependencies/ ./
+COPY --from=unpack /application/application/ ./
+ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
