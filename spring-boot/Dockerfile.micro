@@ -11,7 +11,7 @@ ARG DNF_OPTS="--installroot=/install-root --setopt=reposdir=/install-root/etc/yu
 RUN microdnf --nodocs --best --assumeyes --setopt=install_weak_deps=0 install tar gzip unzip
 RUN microdnf ${DNF_OPTS} \
   --nodocs --best --assumeyes --setopt=install_weak_deps=0 \
-  install java-21-openjdk && microdnf ${DNF_OPTS} clean all && rm /install-root/var/lib/dnf/history*
+  install java-21-openjdk-headless && microdnf ${DNF_OPTS} clean all && rm /install-root/var/lib/dnf/history*
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest as builder-local
 

@@ -5,20 +5,25 @@
 ARG BUILD_ENV=container
 
 FROM registry.access.redhat.com/ubi9/openjdk-21:latest as build-container
+USER 0
 WORKDIR /application
 COPY src src
 COPY pom.xml .
-RUN mvn clean package && java -Djarmode=layertools -jar target/*.jar extract
+RUN mvn package 
+RUN java -Djarmode=layertools -jar target/*.jar extract
 
 FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:latest as build-local
+USER 0
 WORKDIR /application
-ARG JAR_FILE=/target/*.jar
+ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} application.jar
-RUN java -Djarmode=layertools -jar application.jar extract
+RUN java -Djarmode=layertools -jar application.jar extract && chown -R 1001:0 /application && \
+    chmod -R g=u /application
 
 FROM build-${BUILD_ENV} as intermediate
 
 FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:latest
+USER 1001
 WORKDIR /application
 COPY --from=intermediate /application/dependencies/ ./
 COPY --from=intermediate /application/spring-boot-loader/ ./
