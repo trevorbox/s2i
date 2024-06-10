@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: quay.io/trevorbox/spring-boot-micro-jre
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
@@ -23,7 +23,11 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podAnnotations: {}
+podAnnotations: 
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/actuator/prometheus"
+  sidecar.istio.io/inject: "true"
 
 podSecurityContext: {}
   # fsGroup: 2000
@@ -62,10 +66,11 @@ resources:
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   limits:
-    memory: 3Gi
+    memory: 1Gi
+    cpu: 500m
   requests:
-    cpu: 1
-    memory: 3Gi
+    cpu: 500m
+    memory: 1Gi
 
 autoscaling:
   enabled: false
