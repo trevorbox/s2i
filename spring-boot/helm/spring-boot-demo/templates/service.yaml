@@ -11,5 +11,8 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    - name: "jfr-jmx"
+      port: 9091
+      targetPort: 9091
   selector:
     {{- include "spring-boot-demo.selectorLabels" . | nindent 4 }}

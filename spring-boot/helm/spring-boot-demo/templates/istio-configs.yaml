@@ -1,0 +1,98 @@
+{{- if .Values.istio.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.context.name }}-cert
+  namespace: {{ .Values.ingressgateway.namespace }}
+spec:
+  # Secret names are always required.
+  secretName: {{ .Values.context.name }}-cert
+  # commonName: {{ .Values.context.name }}
+  dnsNames:
+    # - {{ .Values.ingressgateway.host }}
+    - foggle
+  usages:
+    - server auth
+    - client auth  
+  issuerRef:
+    name: internal-issuer
+    # We can reference ClusterIssuers by changing the kind here.
+    # The default value is Issuer (i.e. a locally namespaced Issuer)
+    kind: Issuer
+    # This is optional since cert-manager will default to this value however
+    # if you are using an external issuer, change this to that issuer group.
+    group: cert-manager.io
+...
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: {{ .Values.context.name }}
+spec:
+  host: {{ .Values.context.name }}.{{ .Release.Namespace }}.svc.cluster.local
+  subsets:
+  - labels:
+      version: v1
+    name: v1
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+      sni: {{ .Values.context.name }}.{{ .Release.Namespace }}.svc.cluster.local
+...
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ .Values.context.name }}
+  namespace: {{ .Values.ingressgateway.namespace }}
+spec:
+  selector:
+    istio: {{ .Values.ingressgateway.name | trimPrefix "istio-" }}
+  servers:
+  - port:
+      number: 8443
+      name: https
+      protocol: HTTPS
+    hosts:
+      - {{ .Values.ingressgateway.host }}
+    tls:
+      mode: SIMPLE
+      credentialName: {{ .Values.context.name }}-cert
+...
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ .Values.context.name }}
+  namespace: {{ .Values.ingressgateway.namespace }}
+spec:
+  port:
+    targetPort: https
+  tls:
+    termination: passthrough
+    insecureEdgeTerminationPolicy: Redirect
+  to:
+    kind: Service
+    name: istio-ingressgateway
+    weight: 100
+  wildcardPolicy: None
+...
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Values.context.name }}
+spec:
+  gateways:
+  - {{ .Values.ingressgateway.namespace }}/{{ .Values.context.name }}
+  hosts:
+  - {{ .Values.ingressgateway.host }}
+  http:
+  - route:
+    - destination:
+        host: {{ .Values.context.name }}.{{ .Release.Namespace }}.svc.cluster.local
+        port:
+          number: 8080
+...
+{{- end }}

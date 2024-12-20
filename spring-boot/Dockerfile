@@ -29,4 +29,4 @@ COPY --from=intermediate /application/dependencies/ ./
 COPY --from=intermediate /application/spring-boot-loader/ ./
 COPY --from=intermediate /application/snapshot-dependencies/ ./
 COPY --from=intermediate /application/application/ ./
-ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+CMD ["java", "-Dcom.sun.management.jmxremote.port=9091", "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false", "org.springframework.boot.loader.launch.JarLauncher"]
