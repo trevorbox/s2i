@@ -11,6 +11,8 @@ COPY src src
 COPY pom.xml .
 RUN mvn package 
 RUN java -Djarmode=layertools -jar target/*.jar extract
+# CRYOSTAT
+COPY target/dependency/cryostat-agent-shaded.jar /application/dependencies/
 
 FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:latest as build-local
 USER 0
@@ -29,4 +31,6 @@ COPY --from=intermediate /application/dependencies/ ./
 COPY --from=intermediate /application/spring-boot-loader/ ./
 COPY --from=intermediate /application/snapshot-dependencies/ ./
 COPY --from=intermediate /application/application/ ./
-CMD ["java", "-Dcom.sun.management.jmxremote.port=9091", "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false", "org.springframework.boot.loader.launch.JarLauncher"]
+
+CMD ["java", "-javaagent:cryostat-agent-shaded.jar", "org.springframework.boot.loader.launch.JarLauncher"]
+# CMD ["java", "-Dcom.sun.management.jmxremote.port=9091", "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false", "org.springframework.boot.loader.launch.JarLauncher"]
