@@ -8,18 +8,16 @@ import (
 	"os"
 )
 
-const defaultHeaders = "{\"headers\":[{\"key\":\"X-Powered-By\",\"value\":\"Go\"},{\"key\":\"X-XSS-Protection\",\"value\":\"0\"},{\"key\":\"X-Content-Type-Options\",\"value\":\"\"},{\"key\":\"Set-Cookie\",\"value\":\"id=a3fWa; Max-Age=2592000\"},{\"key\":\"Set-Cookie\",\"value\":\"id=b3fWa; Max-Age=3592000\"}]}"
-const USAGE = "Usage: Set the RESPONSE_HEADERS environment variable to always return custom response headers for a GET request, else static default ones will be returned. Alternatively, send a POST or PUT request with the headers you want returned.\nExample: curl -i -X POST localhost:8080 -d '{\"headers\":[{\"key\":\"k1\",\"value\":\"v2\"}]}'"
+const defaultHeaders = `{"Set-Cookie":["id=a3fWa; Max-Age=2592000","id=b3fWa; Max-Age=3592000"],"X-Content-Type-Options":[""],"X-Powered-By":["Go"],"X-XSS-Protection":["0"]}`
+const USAGE = `Usage: Set the RESPONSE_HEADERS environment variable to always return custom response headers for a GET request, else static default headers will be returned. Alternatively, send a POST or PUT request with the headers you want returned. Example: curl -i -X POST localhost:8080 -d '{"k1":["v1"],"k2":["v3","v4"]}'`
 const ENV_VAR_RESPONSE_HEADERS = "RESPONSE_HEADERS"
 
-type Headers struct {
-	Headers []KV
-}
-
-// nested within sbserver response
-type KV struct {
-	Key   string
-	Value string
+type ResponseData struct {
+	RequestHeaders  map[string][]string
+	ResponseHeaders map[string][]string
+	Status          string
+	Error           string
+	Usage           string
 }
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +27,7 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 
 	httpResponseCode := http.StatusOK
 
-	headers := &Headers{}
+	var headers map[string][]string
 	if r.Method == http.MethodPost || r.Method == http.MethodPut {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -46,7 +44,7 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	if len(headers.Headers) == 0 {
+	if len(headers) == 0 {
 		responseHeaders := os.Getenv(ENV_VAR_RESPONSE_HEADERS)
 		if len(responseHeaders) == 0 {
 			responseHeaders = defaultHeaders
@@ -60,19 +58,19 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if len(errorMsg) > 0 {
-		response = fmt.Sprintf("%s\nError: %s", response, errorMsg)
-	}
-
-	response = fmt.Sprintf("%s\n%s", response, USAGE)
-
-	for _, header := range headers.Headers {
-		w.Header().Add(header.Key, header.Value)
+	for key, values := range headers {
+		for _, v := range values {
+			w.Header().Add(key, v)
+		}
 	}
 
 	w.WriteHeader(httpResponseCode)
 
-	fmt.Fprintln(w, response)
+	data := ResponseData{r.Header, headers, response, errorMsg, USAGE}
+
+	jsonData, _ := json.MarshalIndent(data, "", " ")
+	//TODO pretty print json
+	fmt.Fprintln(w, string(jsonData))
 	fmt.Println("Servicing request.")
 }
 
