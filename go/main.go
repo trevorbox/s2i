@@ -13,11 +13,11 @@ const USAGE = `Usage: Set the RESPONSE_HEADERS environment variable to always re
 const ENV_VAR_RESPONSE_HEADERS = "RESPONSE_HEADERS"
 
 type ResponseData struct {
-	RequestHeaders  map[string][]string
-	ResponseHeaders map[string][]string
-	Status          string
-	Error           string
-	Usage           string
+	RequestHeaders  map[string][]string `json:"request_headers,omitempty"`
+	ResponseHeaders map[string][]string `json:"response_headers,omitempty"`
+	Status          string              `json:"status,omitempty"`
+	Error           string              `json:"error,omitempty"`
+	Usage           string              `json:"usage,omitempty"`
 }
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,12 +64,26 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// TODO these are automatically set. May want to explicitly remove these if not set in request
+	// if w.Header().Get("Date") == "" {
+	// 	w.Header()["Date"] = nil
+	// }
+	// if w.Header().Get("Content-Length") == "" {
+	// 	w.Header()["Content-Length"] = nil
+	// }
+	// if w.Header().Get("Content-Type") == "" {
+	// 	w.Header()[http.CanonicalHeaderKey("Content-Type")] = nil
+	// }
+	// if w.Header().Get("Transfer-Encoding") == "" {
+	// 	w.Header()["Transfer-Encoding"] = nil
+	// }
+
 	w.WriteHeader(httpResponseCode)
 
 	data := ResponseData{r.Header, headers, response, errorMsg, USAGE}
 
 	jsonData, _ := json.MarshalIndent(data, "", " ")
-	//TODO pretty print json
+
 	fmt.Fprintln(w, string(jsonData))
 	fmt.Println("Servicing request.")
 }
