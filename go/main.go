@@ -20,7 +20,7 @@ type ResponseData struct {
 	Usage           string              `json:"usage,omitempty"`
 }
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
+func sendResponseHeadersHandler(w http.ResponseWriter, r *http.Request) {
 
 	var response string
 	var errorMsg string
@@ -39,18 +39,19 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 					httpResponseCode = http.StatusBadRequest
 					errorMsg = err.Error()
 				} else {
-					response = "Returned headers from POST or PUT request body."
+					response = fmt.Sprintf("Returned headers from %v request body.", r.Method)
 				}
+			} else {
+				response = fmt.Sprintf("Returned no headers from %v request.", r.Method)
 			}
 		}
-	}
-	if len(headers) == 0 {
+	} else {
 		responseHeaders := os.Getenv(ENV_VAR_RESPONSE_HEADERS)
 		if len(responseHeaders) == 0 {
 			responseHeaders = defaultHeaders
-			response = "Returned hard coded default headers."
+			response = fmt.Sprintf("Returned static default headers from %v request.", r.Method)
 		} else {
-			response = fmt.Sprintf("Returned headers from the %s environment variable.", ENV_VAR_RESPONSE_HEADERS)
+			response = fmt.Sprintf("Returned headers from the %s environment variable for %v request.", ENV_VAR_RESPONSE_HEADERS, r.Method)
 		}
 		if err := json.Unmarshal([]byte(responseHeaders), &headers); err != nil {
 			httpResponseCode = http.StatusInternalServerError
@@ -97,7 +98,7 @@ func listenAndServe(port string) {
 }
 
 func main() {
-	http.HandleFunc("/", helloHandler)
+	http.HandleFunc("/", sendResponseHeadersHandler)
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
 		port = "8080"

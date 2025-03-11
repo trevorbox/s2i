@@ -9,3 +9,7 @@ build: fmt vet
 
 run: fmt vet ## Run locally
 	go run ./main.go
+
+test: fmt vet
+	go test ./... -coverprofile cover.out
+    
