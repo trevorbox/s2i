@@ -23,7 +23,12 @@ podman build -t $TAG . \
   --build-arg author_emails="myorg@example.com" \
   --build-arg build_host=$(uname -n) \
   --build-arg build_id="1337" 
+
+podman login quay.io
+podman push $TAG 
 ```
+
+
 
 Run...
 
