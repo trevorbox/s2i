@@ -7,7 +7,9 @@ This demonstrates a multi-stage build using the registry.access.redhat.com/ubi8/
 Build with ubi-micro...
 
 ```sh
-podman build -t golang-ex . \
+export TAG="quay.io/trevorbox/golang-ex:v2" # replace with your tag
+
+podman build -t $TAG . \
   --build-arg git_origin_url=$(git config --get remote.origin.url) \
   --build-arg git_revision=$(git rev-parse HEAD) \
   --build-arg builder_image_digest=$(skopeo inspect --format "{{ .Digest }}" docker://registry.access.redhat.com/ubi9/go-toolset:latest) \
