@@ -28,8 +28,6 @@ podman login quay.io
 podman push $TAG 
 ```
 
-
-
 Run...
 
 ```sh
