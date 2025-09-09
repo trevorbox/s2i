@@ -12,7 +12,7 @@ COPY pom.xml .
 RUN mvn package 
 RUN java -Djarmode=layertools -jar target/*.jar extract
 # CRYOSTAT
-COPY target/dependency/cryostat-agent-shaded.jar /application/dependencies/
+RUN cp target/dependency/cryostat-agent-shaded.jar /application/dependencies/
 
 FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:latest as build-local
 USER 0
