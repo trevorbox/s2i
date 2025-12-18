@@ -39,7 +39,7 @@ podAnnotations: {}
 podLabels: {}
 
 podSecurityContext: {}
-  # fsGroup: 2000
+  # fsGroup: 1000
 
 securityContext: {}
   # capabilities:
@@ -58,17 +58,17 @@ service:
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  enabled: false
+  enabled: true
   className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+  annotations:
+    route.openshift.io/termination: "edge"
+    route.openshift.io/insecureEdgeTerminationPolicy: redirect
   hosts:
-    - host: chart-example.local
+    - host: httpd-default.apps-crc.testing
       paths:
         - path: /
           pathType: ImplementationSpecific
-  tls: []
+  # tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
@@ -118,7 +118,8 @@ volumeMounts:
 - name: scripts
   mountPath: /scripts
 - name: configs
-  mountPath: /configs
+  mountPath: /tmp/src/httpd-cfg/custom.conf
+  subPath: custom.conf
 
 nodeSelector: {}
 

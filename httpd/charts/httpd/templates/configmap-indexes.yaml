@@ -1,0 +1,11 @@
+{{- range $path, $_ :=  .Files.Glob  "index/**" }}
+{{ $file := $.Files.Get $path }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: httpd-{{ $file | sha256sum | trunc 10 }}
+data:
+{{ base $path | indent 2 }}: |
+{{ $file | indent 4 }}
+{{- end }}

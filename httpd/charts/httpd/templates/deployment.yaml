@@ -36,9 +36,9 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env:
-          - name: JWKS_REFRESH_INTERVAL
-            value: {{ .Values.jwksRefreshInterval }}
+          # env:
+          # - name: JWKS_REFRESH_INTERVAL
+          #   value: {{ .Values.jwksRefreshInterval }}
           command: ["/bin/bash"]
           args:
             - -c
@@ -54,12 +54,25 @@ spec:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
           volumeMounts:
-            {{- toYaml . | nindent 12 }}
+          {{- range $path, $_ :=  .Files.Glob  "index/**" }}
+          {{- $file := $.Files.Get $path }}
+            # - mountPath: /opt/app-root/src/{{ dir $path }}
+            - mountPath: /tmp/src/index/{{ trimPrefix "index/" $path }}
+              name: httpd-{{ $file | sha256sum | trunc 10 }}
+              subPath: {{ base $path }}
           {{- end }}
-      {{- with .Values.volumes }}
+          {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}    
       volumes:
+      {{- range $path, $_ :=  .Files.Glob  "index/**" }}
+      {{- $file := $.Files.Get $path }}
+        - configMap:
+            name: httpd-{{ $file | sha256sum | trunc 10 }}
+          name: httpd-{{ $file | sha256sum | trunc 10 }}
+      {{- end }}
+      {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
