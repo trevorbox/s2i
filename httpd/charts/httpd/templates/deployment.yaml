@@ -57,10 +57,20 @@ spec:
           volumeMounts:
           {{- range $path, $_ :=  .Files.Glob  "index/**" }}
           {{- $file := $.Files.Get $path }}
-            # - mountPath: /opt/app-root/src/{{ dir $path }}
-            - mountPath: /tmp/src/index/{{ trimPrefix "index/" $path }}
-              name: httpd-{{ $file | sha256sum | trunc 10 }}
+            - mountPath: /tmp/src/{{ $path }}
+              name: index-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
               subPath: {{ base $path }}
+          {{- end }}
+          {{- range $path, $_ :=  .Files.Glob  "httpd-cfg/**" }}
+          {{- $file := $.Files.Get $path }}
+            - mountPath: /tmp/src/{{ $path }}
+              name: httpd-cfg-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
+              subPath: {{ base $path }}
+          {{- end }}
+          {{- range $path, $_ :=  .Files.Glob  "scripts/**" }}
+          {{- $file := $.Files.Get $path }}
+            - mountPath: /scripts
+              name: script-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
           {{- end }}
           {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -69,8 +79,21 @@ spec:
       {{- range $path, $_ :=  .Files.Glob  "index/**" }}
       {{- $file := $.Files.Get $path }}
         - configMap:
-            name: httpd-{{ $file | sha256sum | trunc 10 }}
-          name: httpd-{{ $file | sha256sum | trunc 10 }}
+            name: index-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
+          name: index-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
+      {{- end }}
+      {{- range $path, $_ :=  .Files.Glob  "httpd-cfg/**" }}
+      {{- $file := $.Files.Get $path }}
+        - configMap:
+            name: httpd-cfg-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
+          name: httpd-cfg-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
+      {{- end }}
+      {{- range $path, $_ :=  .Files.Glob  "scripts/**" }}
+      {{- $file := $.Files.Get $path }}
+        - configMap:
+            name: script-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
+            defaultMode: 0777
+          name: script-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
       {{- end }}
       {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}

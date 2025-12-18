@@ -1,10 +1,10 @@
-{{- range $path, $_ :=  .Files.Glob  "index/**" }}
+{{- range $path, $_ :=  .Files.Glob  "scripts/**" }}
 {{ $file := $.Files.Get $path }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: index-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
+  name: script-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
 data:
 {{ base $path | indent 2 }}: |
 {{ $file | indent 4 }}

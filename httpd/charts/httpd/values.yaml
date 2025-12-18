@@ -104,22 +104,22 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 # Additional volumes on the output Deployment definition.
-volumes:
-- name: scripts
-  configMap:
-    name: httpd-scripts
-    defaultMode: 0777
-- name: configs
-  configMap:
-    name: httpd-configs
+# volumes:
+# - name: scripts
+#   configMap:
+#     name: httpd-scripts
+#     defaultMode: 0777
+# - name: configs
+#   configMap:
+#     name: httpd-configs
 
 # Additional volumeMounts on the output Deployment definition.
-volumeMounts: 
-- name: scripts
-  mountPath: /scripts
-- name: configs
-  mountPath: /tmp/src/httpd-cfg/custom.conf
-  subPath: custom.conf
+# volumeMounts: 
+# - name: scripts
+#   mountPath: /scripts
+# - name: configs
+#   mountPath: /tmp/src/httpd-cfg/custom.conf
+#   subPath: custom.conf
 
 nodeSelector: {}
 
