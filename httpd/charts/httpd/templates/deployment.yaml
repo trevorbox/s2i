@@ -74,7 +74,9 @@ spec:
           {{- end }}
           {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
-          {{- end }}    
+          {{- end }}
+            - mountPath: /opt/app-root/src
+              name: cache-volume
       volumes:
       {{- range $path, $_ :=  .Files.Glob  "index/**" }}
       {{- $file := $.Files.Get $path }}
@@ -95,6 +97,8 @@ spec:
             defaultMode: 0777
           name: script-{{ $path | sha256sum | trunc 10 }}-{{ $file | sha256sum | trunc 10 }}
       {{- end }}
+        - name: cache-volume
+          emptyDir: {}
       {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
