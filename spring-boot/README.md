@@ -19,6 +19,13 @@ build using registry.access.redhat.com/ubi9/openjdk-21-runtime:latest as final l
 podman build -t ubi9-openjdk-21 -f Dockerfile --build-arg BUILD_ENV=container .
 ```
 
+build using quay.io/hummingbird/openjdk:21-runtime as final layer
+
+```sh
+podman build -t hummingbird-openjdk-21 -f Dockerfile.hummingbird --build-arg BUILD_ENV=container .
+podman run -it --rm -p 8080:8080 hummingbird-openjdk-21
+```
+
 analysis from final layer content
 
 ```sh
@@ -33,6 +40,7 @@ micro-jdk-headless   latest    f65c23258130   45 seconds ago   359MB
 skopeo copy containers-storage:localhost/micro-jre:latest docker://quay.io/trevorbox/spring-boot-micro-jre:latest
 skopeo copy containers-storage:localhost/micro-jdk-headless:latest docker://quay.io/trevorbox/spring-boot-micro-jdk-headless:latest
 skopeo copy containers-storage:localhost/ubi9-openjdk-21:latest docker://quay.io/trevorbox/spring-boot-ubi9-openjdk-21:latest
+skopeo copy containers-storage:localhost/hummingbird-openjdk-21:latest docker://quay.io/trevorbox/spring-boot-hummingbird-openjdk-21:latest
 ```
 
 ```sh
