@@ -31,6 +31,14 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
+        - name: envoy-sidecar
+          image: envoyproxy/envoy:v1.37-latest # Using a modern 2026-era version
+          ports:
+            - name: http-envoy
+              containerPort: {{ .Values.sidecar.port }}
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}

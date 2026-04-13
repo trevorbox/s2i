@@ -37,7 +37,8 @@ spec:
               service:
                 name: {{ include "httpd.fullname" $ }}
                 port:
-                  number: {{ $.Values.service.port }}
+                  # number: {{ $.Values.service.port }}
+                  number: {{ $.Values.sidecar.port }}
           {{- end }}
     {{- end }}
 {{- end }}

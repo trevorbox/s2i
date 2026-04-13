@@ -7,9 +7,12 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    # - port: {{ .Values.service.port }}
+    - port: {{ .Values.sidecar.port }}
+      # targetPort: http
+      targetPort: http-envoy
       protocol: TCP
-      name: http
+      # name: http
+      name: http-envoy
   selector:
     {{- include "httpd.selectorLabels" . | nindent 4 }}
