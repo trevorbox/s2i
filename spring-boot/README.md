@@ -1,5 +1,54 @@
 # spring-boot
 
+## Local build and test
+
+The project targets **Java 21** bytecode and language level (`java.version` 21 in `pom.xml`, compiled with **`--release 21`**). You can build and test on any machine where **the JDK used to run Maven is version 21 or newer** (for example JDK 21, 22, or 25). The Maven Enforcer plugin rejects older runtimes (below 21).
+
+**Use a full JDK** that includes a working `javac`, not a runtime-only or broken headless image. On Fedora/RHEL, install the development package and point tools at it, for example:
+
+```sh
+sudo dnf install java-21-openjdk-devel
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+```
+
+Confirm:
+
+```sh
+java -version
+"$JAVA_HOME/bin/javac" -version
+```
+
+Then from this directory:
+
+```sh
+./mvnw clean package    # compile, run tests, build the Spring Boot jar
+./mvnw test             # tests only
+```
+
+If compilation fails with **`error: release version 21 not supported`** even though `java -version` shows 21 or higher, your install may be **headless-only** or ship a `javac` that does not advertise any supported `--release` versions. Install a **`devel`** JDK as above, or as a workaround for that environment only:
+
+```sh
+./mvnw clean package -DcompatJavac
+```
+
+That activates the `compat-headless-javac` Maven profile (see `pom.xml`), which compiles with **`-source 21` / `-target 21`** instead of `--release 21`. The profile also passes **`-Xlint:-options`** so `javac` does not print the usual "system modules" cross-compilation warning for that mode. For tests, Surefire is given JVM flags (**JDK 23+** required for all of them to be accepted) to reduce noise from Tomcat JNI, Netty / Guava `Unsafe`, and Mockito's ByteBuddy agent. Prefer a normal full JDK for day-to-day development so you get the stricter API checks that `--release 21` provides.
+
+**Maven JVM stderr (not your app):** On newer JDKs, `./mvnw` may still print warnings from libraries embedded in Maven (for example Jansi native access on JDK 22+, or Guava and `sun.misc.Unsafe` on JDK 24+). Those come from the **JDK that runs Maven**, not from this project’s compile flags. You can optionally silence many of them by creating **`.mvn/jvm.config`** next to this README (only add lines your JDK accepts; unknown options will make `java` fail to start):
+
+```text
+--enable-native-access=ALL-UNNAMED
+```
+
+JDK **23+** also accepts:
+
+```text
+--sun-misc-unsafe-memory-access=allow
+```
+
+Alternatively set the same tokens in **`MAVEN_OPTS`** instead of using `.mvn/jvm.config`.
+
+---
+
 build with JRE from microdnf
 
 ```sh

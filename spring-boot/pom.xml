@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.5</version>
+		<version>4.0.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
@@ -14,6 +14,7 @@
 	<name>demo</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
+		<!-- Language level and bytecode: Java 21. Use a full JDK 21+ (e.g. java-21-openjdk-devel), not headless-only. -->
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
@@ -21,10 +22,24 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-restclient</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-resttestclient</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -44,6 +59,28 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.5.0</version>
+				<executions>
+					<execution>
+						<id>enforce-java</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireJavaVersion>
+									<version>[21,)</version>
+								</requireJavaVersion>
+							</rules>
+							<fail>true</fail>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -78,5 +115,49 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<!--
+	  Some Fedora/RHEL headless JDK images ship a javac with no supported release table; use
+	  property compatJavac so the compiler uses source/target 21 only (no release flag).
+	  Normal: install java-21-openjdk-devel and run plain ./mvnw clean package.
+	-->
+	<profiles>
+		<profile>
+			<id>compat-headless-javac</id>
+			<activation>
+				<property>
+					<name>compatJavac</name>
+				</property>
+			</activation>
+			<properties>
+				<!-- Drop release flag so javac uses source/target only (broken headless JDK toolchains). -->
+				<maven.compiler.release></maven.compiler.release>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<configuration combine.self="override">
+							<source>21</source>
+							<target>21</target>
+							<!-- Without release, javac warns about system modules; this lint is expected for compat mode. -->
+							<compilerArgs>
+								<arg>-Xlint:-options</arg>
+							</compilerArgs>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<!-- Forked test JVM: JDK 23+ accepts all flags (typical with compat + headless JDK). -->
+							<argLine>--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -XX:+EnableDynamicAgentLoading</argLine>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
