@@ -3,34 +3,37 @@
 # docker build -f src/main/docker/Dockerfile .
 
 ARG BUILD_ENV=container
+ARG FINAL_IMAGE=registry.access.redhat.com/ubi9/openjdk-21-runtime:latest
+# ARG FINAL_IMAGE=registry.access.redhat.com/hi/openjdk:21-runtime
 
 FROM registry.access.redhat.com/ubi9/openjdk-21:latest as build-container
 USER 0
-WORKDIR /application
+WORKDIR /builder
 COPY src src
 COPY pom.xml .
 RUN mvn package 
-RUN java -Djarmode=layertools -jar target/*.jar extract
+RUN mv target/*.jar target/application.jar
+RUN java -Djarmode=tools -jar target/*.jar extract --layers --destination extracted
 # CRYOSTAT
-RUN cp target/dependency/cryostat-agent-shaded.jar /application/dependencies/
+RUN cp target/dependency/cryostat-agent-shaded.jar /builder/extracted/dependencies/
 
 FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:latest as build-local
 USER 0
-WORKDIR /application
+WORKDIR /builder
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} application.jar
-RUN java -Djarmode=layertools -jar application.jar extract && chown -R 1001:0 /application && \
-    chmod -R g=u /application
+RUN java -Djarmode=tools -jar application.jar extract --layers --destination extracted
 
 FROM build-${BUILD_ENV} as intermediate
 
-FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:latest
-USER 1001
+FROM ${FINAL_IMAGE}
 WORKDIR /application
-COPY --from=intermediate /application/dependencies/ ./
-COPY --from=intermediate /application/spring-boot-loader/ ./
-COPY --from=intermediate /application/snapshot-dependencies/ ./
-COPY --from=intermediate /application/application/ ./
-
-CMD ["java", "-javaagent:cryostat-agent-shaded.jar", "org.springframework.boot.loader.launch.JarLauncher"]
-# CMD ["java", "-Dcom.sun.management.jmxremote.port=9091", "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false", "org.springframework.boot.loader.launch.JarLauncher"]
+USER 1001
+COPY --from=intermediate \
+     /builder/extracted/dependencies/ \
+     /builder/extracted/spring-boot-loader/ \
+     /builder/extracted/snapshot-dependencies/ \
+     /builder/extracted/application/ \
+     ./
+# ENV JAVA_TOOL_OPTIONS="-javaagent:cryostat-agent-shaded.jar"
+ENTRYPOINT ["java", "-jar", "application.jar"]

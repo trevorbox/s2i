@@ -56,7 +56,7 @@ podman build -t micro-jdk-headless -f Dockerfile.micro --build-arg BUILD_ENV=dnf
 ```
 
 build from jre tarball (download it locally) 
-> <https://developers.redhat.com/content-gateway/file/openjdk/21.0.3/java-21-openjdk-21.0.3.0.9-1.portable.jre.x86_64.tar.xz>
+> <https://developers.redhat.com/content-gateway/file/openjdk/21.0.11/java-21-openjdk-21.0.11.0.10-1.portable.jre.x86_64.tar.xz>
 
 ```sh
 podman build -t micro-jre -f Dockerfile.micro --build-arg BUILD_ENV=local .
@@ -66,13 +66,14 @@ build using registry.access.redhat.com/ubi9/openjdk-21-runtime:latest as final l
 
 ```sh
 podman build -t ubi9-openjdk-21 -f Dockerfile --build-arg BUILD_ENV=container .
+podman run -it --rm -p 8080:8080 ubi9-openjdk-21 
 ```
 
-build using quay.io/hummingbird/openjdk:21-runtime as final layer
+build using registry.access.redhat.com/hi/openjdk:21-runtime as final layer
 
 ```sh
-podman build -t hummingbird-openjdk-21 -f Dockerfile.hummingbird --build-arg BUILD_ENV=container .
-podman run -it --rm -p 8080:8080 hummingbird-openjdk-21
+podman build -t hi-openjdk-21 -f Dockerfile --build-arg BUILD_ENV=container . --build-arg FINAL_IMAGE=registry.access.redhat.com/hi/openjdk:21-runtime
+podman run -it --rm -p 8080:8080 hi-openjdk-21
 ```
 
 analysis from final layer content
