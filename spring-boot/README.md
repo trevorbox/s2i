@@ -1,5 +1,7 @@
 # spring-boot
 
+<https://docs.spring.io/spring-boot/reference/packaging/container-images/dockerfiles.html>
+
 ## Local build and test
 
 The project targets **Java 21** bytecode and language level (`java.version` 21 in `pom.xml`, compiled with **`--release 21`**). You can build and test on any machine where **the JDK used to run Maven is version 21 or newer** (for example JDK 21, 22, or 25). The Maven Enforcer plugin rejects older runtimes (below 21).
