@@ -49,48 +49,52 @@ Alternatively set the same tokens in **`MAVEN_OPTS`** instead of using `.mvn/jvm
 
 ---
 
-build with JRE from microdnf
-
-```sh
-podman build -t micro-jdk-headless -f Dockerfile.micro --build-arg BUILD_ENV=dnf .
-```
-
-build from jre tarball (download it locally) 
-> <https://developers.redhat.com/content-gateway/file/openjdk/21.0.11/java-21-openjdk-21.0.11.0.10-1.portable.jre.x86_64.tar.xz>
-
-```sh
-podman build -t micro-jre -f Dockerfile.micro --build-arg BUILD_ENV=local .
-```
+> Note: using --build-arg BUILD_ENV=local will copy over the locally built jar (`./mvnw package`) vs building in a container
 
 build using registry.access.redhat.com/ubi9/openjdk-21-runtime:latest as final layer
 
 ```sh
-podman build -t ubi9-openjdk-21 -f Dockerfile --build-arg BUILD_ENV=container .
+podman build -t ubi9-openjdk-21 -f Dockerfile .
 podman run -it --rm -p 8080:8080 ubi9-openjdk-21 
 ```
 
 build using registry.access.redhat.com/hi/openjdk:21-runtime as final layer
 
 ```sh
-podman build -t hi-openjdk-21 -f Dockerfile --build-arg BUILD_ENV=container . --build-arg FINAL_IMAGE=registry.access.redhat.com/hi/openjdk:21-runtime
+podman build -t hi-openjdk-21 -f Dockerfile . --build-arg FINAL_RUNTIME=hi
 podman run -it --rm -p 8080:8080 hi-openjdk-21
+```
+
+build with openjdk-headless
+
+```sh
+podman build -t micro-jdk-headless -f Dockerfile --build-arg FINAL_RUNTIME=micro --build-arg MICRO_RUNTIME=headless .
+podman run -it --rm -p 8080:8080 micro-jdk-headless
+```
+
+build from jre tarball (download it locally) <https://developers.redhat.com/content-gateway/file/openjdk/21.0.11/java-21-openjdk-21.0.11.0.10-1.portable.jre.x86_64.tar.xz>
+
+```sh
+podman build -t micro-jre -f Dockerfile --build-arg FINAL_RUNTIME=micro --build-arg MICRO_RUNTIME=jre-local .
+podman run -it --rm -p 8080:8080 micro-jre
 ```
 
 analysis from final layer content
 
 ```sh
-[tbox@fedora spring-boot]$ docker images
-REPOSITORY           TAG       IMAGE ID       CREATED          SIZE
-ubi9-openjdk-21      latest    937ba1070101   5 seconds ago    392MB
-micro-jre            latest    ee11ee1c7601   35 seconds ago   241MB
-micro-jdk-headless   latest    f65c23258130   45 seconds ago   359MB
+[tbox@fedora spring-boot]$ podman images
+REPOSITORY                                          TAG         IMAGE ID      CREATED        SIZE
+localhost/micro-jre                                 latest      a45201aadebb  3 minutes ago  284 MB
+localhost/micro-jdk-headless                        latest      ad6328bf0e2e  4 minutes ago  424 MB
+localhost/hi-openjdk-21                             latest      ba494e25430d  4 minutes ago  328 MB
+localhost/ubi9-openjdk-21                           latest      c0cfad757e5d  5 minutes ago  472 MB
 ```
 
 ```sh
 skopeo copy containers-storage:localhost/micro-jre:latest docker://quay.io/trevorbox/spring-boot-micro-jre:latest
 skopeo copy containers-storage:localhost/micro-jdk-headless:latest docker://quay.io/trevorbox/spring-boot-micro-jdk-headless:latest
 skopeo copy containers-storage:localhost/ubi9-openjdk-21:latest docker://quay.io/trevorbox/spring-boot-ubi9-openjdk-21:latest
-skopeo copy containers-storage:localhost/hummingbird-openjdk-21:latest docker://quay.io/trevorbox/spring-boot-hummingbird-openjdk-21:latest
+skopeo copy containers-storage:localhost/hi-openjdk-21:latest docker://quay.io/trevorbox/spring-boot-hi-openjdk-21:latest
 ```
 
 ```sh
