@@ -2,7 +2,7 @@
 # Stream a HotSpot heap dump from an OpenShift/Kubernetes pod to a local file
 # without storing a full .hprof on the container overlay (FIFO on tmpfs + oc exec).
 #
-# Requires: oc, kubectl; optional: python3 (ephemeral exit verification).
+# Ephemeral verification uses oc -o jsonpath (no jq/python; needs a recent oc/kubectl client).
 # Run: ./stream-heapdump.sh --help
 
 set -euo pipefail
@@ -57,49 +57,21 @@ APP_C="${APP_C:-spring-boot-demo}"
 JDK_IMAGE="${JDK_IMAGE:-registry.access.redhat.com/ubi9/openjdk-21:latest}"
 POD_AUTO="${POD_AUTO:-0}"
 VERIFY_POLL_MAX="${VERIFY_POLL_MAX:-20}"
-OUT="${1:-./heap.hprof}"
 
 # Poll pod status until ephemeral container $3 shows terminated, or timeout.
-# Prints one line to stdout: terminated|exitCode|reason|finishedAt | running| | | | waiting| |reason | absent
+# Uses oc jsonpath (no Python). Prints one line: terminated|exitCode|reason|finishedAt
 wait_for_ephemeral_terminated() {
   local ns=$1 pod=$2 ecname=$3
-  local attempt=0 line phase
-  if ! command -v python3 >/dev/null 2>&1; then
-    echo "verify: python3 not found; skipping ephemeral exit check." >&2
-    return 2
-  fi
+  local attempt=0 line
+  local jp
+  jp="{.status.ephemeralContainerStatuses[?(@.name==\"${ecname}\")].state.terminated.exitCode}{\"\t\"}{.status.ephemeralContainerStatuses[?(@.name==\"${ecname}\")].state.terminated.reason}{\"\t\"}{.status.ephemeralContainerStatuses[?(@.name==\"${ecname}\")].state.terminated.finishedAt}"
+
+  local t_exit t_reason t_finished
   while (( attempt < VERIFY_POLL_MAX )); do
-    line="$(
-      oc get pod -n "$ns" "$pod" -o json | EPHEMERAL_NAME="$ecname" python3 -c "
-import json, os, sys
-name = os.environ['EPHEMERAL_NAME']
-pod = json.load(sys.stdin)
-for s in pod.get('status', {}).get('ephemeralContainerStatuses') or []:
-    if s.get('name') != name:
-        continue
-    st = s.get('state') or {}
-    if 'terminated' in st:
-        t = st['terminated']
-        ec = t.get('exitCode')
-        r = t.get('reason') or ''
-        fa = t.get('finishedAt') or ''
-        print(f'terminated|{ec}|{r}|{fa}')
-        sys.exit(0)
-    if 'running' in st:
-        print('running|||')
-        sys.exit(0)
-    if 'waiting' in st:
-        w = st.get('waiting') or {}
-        print('waiting||' + str(w.get('reason', '')) + '|')
-        sys.exit(0)
-    print('other|||')
-    sys.exit(0)
-print('absent|||')
-"
-    )"
-    phase="${line%%|*}"
-    if [[ "$phase" == "terminated" ]]; then
-      echo "$line"
+    line="$(oc get pod -n "$ns" "$pod" -o jsonpath="$jp" 2>/dev/null || true)"
+    IFS=$'\t' read -r t_exit t_reason t_finished <<<"${line}"
+    if [[ -n "$line" && (-n "${t_exit}" || -n "${t_finished}") ]]; then
+      echo "terminated|${t_exit:-}|${t_reason:-}|${t_finished:-}"
       return 0
     fi
     sleep 1
@@ -111,12 +83,9 @@ print('absent|||')
 
 print_ephemeral_impact_note() {
   local ns=$1 pod=$2
-  local ec_count="?"
-  if command -v python3 >/dev/null 2>&1; then
-    ec_count="$(
-      oc get pod -n "$ns" "$pod" -o json | python3 -c 'import json,sys; print(len(json.load(sys.stdin).get("spec",{}).get("ephemeralContainers") or []))'
-    )"
-  fi
+  local ec_count
+  ec_count="$(oc get pod -n "$ns" "$pod" -o jsonpath='{range .spec.ephemeralContainers[*]}x{end}' 2>/dev/null | wc -c | tr -d ' ')"
+  ec_count=$((ec_count + 0))
   cat >&2 <<EOF
 
 --- Ephemeral debug container (impact) ---
@@ -200,8 +169,6 @@ VERIFY_LINE="$(wait_for_ephemeral_terminated "$NS" "$POD" "$EPHEMERAL")" || VERI
 if [[ "$VERIFY_RC" -eq 0 ]]; then
   IFS='|' read -r _v_phase _v_exit _v_reason _v_finished <<<"$VERIFY_LINE"
   echo "verify: ephemeral container \"$EPHEMERAL\" -> Terminated (exit ${_v_exit:-?}, reason=${_v_reason:-?}, finishedAt=${_v_finished:-?})" >&2
-elif [[ "$VERIFY_RC" -eq 2 ]]; then
-  echo "verify: skipped (python3 not installed)" >&2
 else
   _v_phase="${VERIFY_LINE%%|*}"
   echo "verify: ephemeral container \"$EPHEMERAL\" not confirmed Terminated within ${VERIFY_POLL_MAX}s (last phase=${_v_phase:-unknown}). Check: oc get pod -n \"$NS\" \"$POD\" -o yaml" >&2
