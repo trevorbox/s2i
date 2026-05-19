@@ -11,6 +11,10 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    - port: {{ .Values.service.helloPort }}
+      targetPort: hello
+      protocol: TCP
+      name: hello
     - name: "jfr-jmx"
       port: 9091
       targetPort: 9091

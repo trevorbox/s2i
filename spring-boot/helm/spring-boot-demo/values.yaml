@@ -43,6 +43,7 @@ securityContext: {}
 service:
   type: ClusterIP
   port: 8080
+  helloPort: 11174
 
 ingress:
   enabled: false

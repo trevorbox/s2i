@@ -1,21 +1,29 @@
 package com.example.demo;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import org.apache.catalina.connector.Connector;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+import org.springframework.boot.tomcat.TomcatWebServer;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.Arrays;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
-@TestPropertySource(properties = "management.endpoints.web.exposure.include=health")
+@TestPropertySource(properties = {
+		"management.endpoints.web.exposure.include=health",
+		"hello.server.port=0"
+})
 class DemoApplicationTests {
 
 	@Autowired
@@ -26,6 +34,9 @@ class DemoApplicationTests {
 
 	@Autowired
 	private MeterRegistry meterRegistry;
+
+	@Autowired
+	private ServletWebServerApplicationContext webServerApplicationContext;
 
 	@Test
 	void contextLoads() {
@@ -39,6 +50,21 @@ class DemoApplicationTests {
 	@Test
 	void root_returnsOkWithHiKey() {
 		ResponseEntity<String> response = restTemplate.getForEntity("/", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull().contains("\"Hi\"");
+	}
+
+	@Test
+	void root_onHelloPort_returnsOk() {
+		int mainPort = webServerApplicationContext.getWebServer().getPort();
+		TomcatWebServer tomcat = (TomcatWebServer) webServerApplicationContext.getWebServer();
+		int helloPort = Arrays.stream(tomcat.getTomcat().getService().findConnectors())
+				.mapToInt(Connector::getLocalPort)
+				.filter(port -> port > 0 && port != mainPort)
+				.findFirst()
+				.orElseThrow();
+		ResponseEntity<String> response = restTemplate.getForEntity(
+				"http://localhost:" + helloPort + "/", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull().contains("\"Hi\"");
 	}

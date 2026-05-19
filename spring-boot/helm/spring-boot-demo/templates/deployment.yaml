@@ -44,6 +44,9 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+            - name: hello
+              containerPort: {{ .Values.service.helloPort }}
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /
