@@ -159,17 +159,32 @@ resolve_remote_dir() {
   '
 }
 
-strip_pilot_agent_newline() {
+last_byte_hex() {
+  # Command substitution strips a trailing newline from $(tail -c 1), so compare hex instead.
+  tail -c 1 "$1" | od -An -tx1 2>/dev/null | tr -d ' \n'
+}
+
+strip_transport_suffix() {
+  # pilot-agent and oc exec base64 often append trailing CR/LF after binary data.
   local raw=$1 final=$2
-  local sz last_byte
+  local sz stripped=0 last_hex
   sz=$(wc -c <"$raw" | tr -d ' ')
   if [[ "$sz" -eq 0 ]]; then
     echo "Downloaded heap profile is empty" >&2
     return 1
   fi
-  last_byte=$(tail -c 1 "$raw" | xxd -p 2>/dev/null || true)
-  if [[ "$last_byte" == "0a" ]]; then
-    truncate -s $((sz - 1)) "$raw"
+  while [[ "$sz" -gt 0 ]]; do
+    last_hex=$(last_byte_hex "$raw")
+    if [[ "$last_hex" == "0a" || "$last_hex" == "0d" ]]; then
+      truncate -s $((sz - 1)) "$raw"
+      stripped=$((stripped + 1))
+      sz=$((sz - 1))
+    else
+      break
+    fi
+  done
+  if [[ "$stripped" -gt 0 ]]; then
+    echo "Stripped ${stripped} trailing newline byte(s) from download" >&2
   fi
   mv -f "$raw" "$final"
 }
@@ -177,7 +192,16 @@ strip_pilot_agent_newline() {
 validate_profile() {
   if command -v gzip >/dev/null 2>&1; then
     if ! gzip -t "$OUT" 2>/dev/null; then
-      echo "Warning: $OUT does not look like valid gzip (pilot-agent or admin API issue?)" >&2
+      local last_hex sz
+      last_hex=$(last_byte_hex "$OUT")
+      if [[ "$last_hex" == "0a" || "$last_hex" == "0d" ]]; then
+        sz=$(wc -c <"$OUT" | tr -d ' ')
+        truncate -s $((sz - 1)) "$OUT"
+        echo "Stripped trailing newline from $OUT (bash transport quirk)" >&2
+      fi
+    fi
+    if ! gzip -t "$OUT" 2>/dev/null; then
+      echo "Warning: $OUT is not valid gzip (truncated dump, admin error body, or copy corruption?)" >&2
       return 0
     fi
   fi
@@ -270,7 +294,7 @@ if ! proxy_exec base64 "$REMOTE_HEAP" | base64 -d >"$TMP_RAW"; then
 fi
 
 rm -f "$OUT"
-strip_pilot_agent_newline "$TMP_RAW" "$OUT"
+strip_transport_suffix "$TMP_RAW" "$OUT"
 
 validate_profile
 
