@@ -9,6 +9,13 @@
 
 set -euo pipefail
 
+# Git Bash / MSYS converts Unix paths in command lines (e.g. /var/lib/istio/... →
+# C:/Program Files/Git/var/...) before oc exec sends them to the pod. Disable that.
+if [[ -n "${MSYSTEM:-}" || "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == mingw* ]]; then
+  export MSYS2_ARG_CONV_EXCL='*'
+  export MSYS_NO_PATHCONV=1
+fi
+
 usage() {
   local prog
   prog="$(basename "$0")"
@@ -43,6 +50,8 @@ Examples:
   $prog --memory ./envoy.heap
 
 After a successful run, the script prints steps to view the profile with go tool pprof.
+
+Git Bash on Windows: this script disables MSYS path conversion for oc exec automatically.
 USAGE
 }
 
@@ -99,7 +108,9 @@ if ! command -v oc >/dev/null 2>&1; then
 fi
 
 proxy_exec() {
-  oc exec -n "$NS" "$POD" -c "$PROXY_C" -- "$@"
+  # MSYS_NO_PATHCONV must apply to the oc invocation (see block above).
+  MSYS2_ARG_CONV_EXCL='*' MSYS_NO_PATHCONV=1 \
+    oc exec -n "$NS" "$POD" -c "$PROXY_C" -- "$@"
 }
 
 admin_request() {
