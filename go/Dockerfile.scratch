@@ -48,7 +48,8 @@ LABEL org.opencontainers.image.title=go-app \
     com.example.org.context.build-host=${build_host} \
     com.example.org.context.build-id=${build_id} \
     com.example.org.context.image.builder.digest=${builder_image_digest} \
-    com.example.org.context.image.builder.name=${builder_image_repository}:${builder_image_tag}
+    com.example.org.context.image.builder.name=${builder_image_repository}:${builder_image_tag} \
+    from=scratch
 
 WORKDIR /app
 COPY --from=builder /opt/app-root/gobinary /app/
