@@ -74,7 +74,7 @@ podman build -t micro-jdk-headless -f Dockerfile --build-arg FINAL_RUNTIME=micro
 podman run -it --rm -p 8080:8080 micro-jdk-headless
 ```
 
-build from jre tarball (download it locally) <https://developers.redhat.com/content-gateway/file/openjdk/21.0.11/java-21-openjdk-21.0.11.0.10-1.portable.jre.x86_64.tar.xz>
+build from jre tarball (download it locally) <https://developers.redhat.com/content-gateway/file/openjdk/21.0.12.1/java-21-openjdk-21.0.12.1.1-1.0.portable.jre.x86_64.tar.xz>
 
 ```sh
 podman build -t micro-jre -f Dockerfile --build-arg FINAL_RUNTIME=micro --build-arg MICRO_RUNTIME=jre-local .

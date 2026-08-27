@@ -24,7 +24,7 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal:latest as micro-jre-local
 COPY --from=micro / /install-root
 RUN mkdir -p /jdks && mkdir -p /install-root/jdks/java-21
 # youll need to download this file locally
-ADD java-21-openjdk-21.0.11.0.10-1.portable.jre.x86_64.tar.xz /jdks
+ADD java-21-openjdk-21.0.12.1.1-1.0.portable.jre.x86_64.tar.xz /jdks
 RUN mv /jdks/*/* /install-root/jdks/java-21
 
 FROM micro-${MICRO_RUNTIME} as micro-with-jre
