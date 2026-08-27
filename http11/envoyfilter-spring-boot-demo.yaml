@@ -1,0 +1,66 @@
+# Ignore RFC 2817 TLS upgrade headers on HTTP/1.1 requests for spring-boot-demo only.
+#
+# Requires Envoy >= 1.34 (ignore_http_11_upgrade in Http1ProtocolOptions).
+# Fixes https://github.com/istio/istio/issues/53239 for workloads that send
+#   Connection: Upgrade
+#   Upgrade: TLS/1.2
+# on cleartext http:// mesh traffic.
+#
+# Apply:
+#   oc apply -f envoyfilter-spring-boot-demo.yaml
+#
+# Verify labels match your pod first:
+#   oc get pod -n spring-boot-demo --show-labels
+#
+# After apply, restart so sidecars pick up the listener patch:
+#   oc rollout restart deploy/spring-boot-demo -n spring-boot-demo
+#
+# Test:
+#   oc exec -n spring-boot-demo deploy/spring-boot-demo -c spring-boot-demo -- \
+#     curl -sv -H "Connection: Upgrade" -H "Upgrade: TLS/1.2" \
+#     http://spring-boot-demo.spring-boot-demo.svc.cluster.local:8080/
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: spring-boot-demo-ignore-http11-tls-upgrade
+  namespace: spring-boot-demo
+spec:
+  workloadSelector:
+    labels:
+      app.kubernetes.io/name: spring-boot-demo
+      app.kubernetes.io/instance: spring-boot-demo
+  configPatches:
+    # Outbound: client requests from this pod (matches upgrade_failed in istio-proxy logs).
+    - applyTo: NETWORK_FILTER
+      match:
+        context: SIDECAR_OUTBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: MERGE
+        value:
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+            http_protocol_options:
+              ignore_http_11_upgrade:
+                - prefix: TLS/
+                  ignore_case: true
+    # Inbound: requests arriving at this pod from other mesh clients.
+    - applyTo: NETWORK_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: MERGE
+        value:
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+            http_protocol_options:
+              ignore_http_11_upgrade:
+                - prefix: TLS/
+                  ignore_case: true

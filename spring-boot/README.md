@@ -105,6 +105,34 @@ helm upgrade -i spring-boot-demo-micro-jdk-headless helm/spring-boot-demo --crea
 helm upgrade -i spring-boot-demo-ubi9-openjdk-21 helm/spring-boot-demo --create-namespace --set image.repository=quay.io/trevorbox/spring-boot-ubi9-openjdk-21 -n spring-boot-demo
 ```
 
+## Graceful shutdown (native sidecar)
+
+On OpenShift Service Mesh 3 / Istio native sidecars, Envoy stays up until **this process exits**. Istio `POST /drain` only GOAWAYs new connections; it does not finish in-flight work or wait for Istiod EDS. Configure the **application pod**, not `holdApplicationUntilProxyStarts` or `terminationDrainDuration` (leave both unset on apps). Details: [`native-sidecar-drain-test/README.md`](../../openshift-service-mesh/components/native-sidecar-drain-test/README.md).
+
+This app:
+
+* `server.shutdown=graceful` — on SIGTERM, refuse new requests, finish in-flight work, then exit (`spring.lifecycle.timeout-per-shutdown-phase=30s`).
+* `GET /ready` — 503 when `/tmp/unhealthy` exists **or** Spring readiness is `REFUSING_TRAFFIC`. `GET /live` stays 200 so kubelet does not SIGKILL mid-drain.
+* `GET /sleep?seconds=` — blocking in-flight request for drain tests.
+
+The Helm chart (`terminationGracePeriodSeconds: 40` > 5s preStop + 30s Tomcat drain):
+
+```yaml
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "touch /tmp/unhealthy; sleep 5"]
+readinessProbe:
+  httpGet: { path: /ready, port: http }
+  periodSeconds: 1
+livenessProbe:
+  httpGet: { path: /live, port: http }
+```
+
+`preStop` is a **single** exec: fail readiness **first**, then sleep (EDS cushion). Sleep alone leaves Ready=true; failing `/ready` only on SIGTERM is too late (after `preStop`). Rolling updates use `maxUnavailable: 0` so a Ready replacement exists before the old pod is deleted.
+
+Drain check from an in-mesh client: `GET /sleep?seconds=8`, then delete the pod, expect HTTP 200.
+
 ```sh
 oc exec deploy/spring-boot-demo-micro-jdk-headless -- java -XshowSettings:system -version && java -Xlog:gc=info -version
 oc exec deploy/spring-boot-demo-micro-jre -- java -XshowSettings:system -version && java -Xlog:gc=info -version

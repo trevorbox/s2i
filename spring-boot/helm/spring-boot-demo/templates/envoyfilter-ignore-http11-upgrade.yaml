@@ -1,0 +1,43 @@
+{{- if .Values.istio.envoyFilter.ignoreHttp11Upgrade.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: {{ include "spring-boot-demo.fullname" . }}-ignore-http11-tls-upgrade
+  labels:
+    {{- include "spring-boot-demo.labels" . | nindent 4 }}
+spec:
+  workloadSelector:
+    labels:
+      {{- include "spring-boot-demo.selectorLabels" . | nindent 6 }}
+  configPatches:
+    - applyTo: NETWORK_FILTER
+      match:
+        context: SIDECAR_OUTBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: MERGE
+        value:
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+            http_protocol_options:
+              ignore_http_11_upgrade:
+                {{- toYaml .Values.istio.envoyFilter.ignoreHttp11Upgrade.matchers | nindent 16 }}
+    - applyTo: NETWORK_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: MERGE
+        value:
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+            http_protocol_options:
+              ignore_http_11_upgrade:
+                {{- toYaml .Values.istio.envoyFilter.ignoreHttp11Upgrade.matchers | nindent 16 }}
+{{- end }}
