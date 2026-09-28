@@ -31,6 +31,31 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestPostEmptyArray(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("[]"))
+	w := httptest.NewRecorder()
+	sendResponseHeadersHandler(w, req)
+
+	res := w.Result()
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, 0, len(res.Header), res.Header)
+}
+
+func TestPostKeyValueList(t *testing.T) {
+	postData := `[{"key":"k1","value":"v1"},{"key":"k2","value":"v3"},{"key":"k2","value":"v4"}]`
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(postData))
+	w := httptest.NewRecorder()
+	sendResponseHeadersHandler(w, req)
+
+	res := w.Result()
+	h := res.Header
+	assert.NotNil(t, h)
+	assert.Equal(t, 2, len(h), h)
+	assert.Equal(t, []string{"v1"}, h.Values("k1"))
+	assert.Equal(t, []string{"v3", "v4"}, h.Values("k2"))
+}
+
 func TestPost(t *testing.T) {
 
 	postData := "{\"k1\":[\"v1\"],\"k2\":[\"v3\",\"v4\"]}"

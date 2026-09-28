@@ -48,6 +48,11 @@ class DemoApplicationTests {
 	}
 
 	@Test
+	void otlpTraceExport_isDisabledByDefault() {
+		assertThat(environment.getProperty("management.tracing.export.otlp.enabled", Boolean.class)).isFalse();
+	}
+
+	@Test
 	void root_returnsOkWithHiKey() {
 		ResponseEntity<String> response = restTemplate.getForEntity("/", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

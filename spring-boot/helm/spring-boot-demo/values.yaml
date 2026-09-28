@@ -121,6 +121,13 @@ tolerations: []
 affinity: {}
 
 
+# App OTLP export is off until enabled. Istio still exports its own proxy spans.
+# otlpEndpoint is the full OTLP HTTP traces URL, used only when enabled is true.
+# Empty endpoint with enabled true uses http://localhost:4318/v1/traces (a collector in this pod).
+tracing:
+  enabled: false
+  otlpEndpoint: ""
+
 istio:
   enabled: false
   envoyFilter:

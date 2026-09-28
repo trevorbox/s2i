@@ -105,6 +105,76 @@ helm upgrade -i spring-boot-demo-micro-jdk-headless helm/spring-boot-demo --crea
 helm upgrade -i spring-boot-demo-ubi9-openjdk-21 helm/spring-boot-demo --create-namespace --set image.repository=quay.io/trevorbox/spring-boot-ubi9-openjdk-21 -n spring-boot-demo
 ```
 
+## Tracing (OpenTelemetry)
+
+Istio can stamp each request with W3C (`traceparent`) or B3 headers. Those spans are the HTTP hop only. This app continues that trace and adds method spans plus the original caller.
+
+`GET /api/work?sku=widget` runs three child spans: `work.authorize`, `work.lookup-order`, and `work.price`. The response includes `traceId` (same id as the incoming `traceparent`) and `enduser.id` when the caller is known.
+
+The original caller is the W3C baggage key `enduser.id`. If that key is absent, the app copies the `X-End-User` header into baggage for this request and for outbound calls. A later hop keeps the baggage it received. The value is a span attribute and a logging MDC field, and it is not a Prometheus label.
+
+```sh
+curl -s -H 'X-End-User: ada' \
+  -H 'traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01' \
+  'http://localhost:8080/api/work?sku=widget'
+```
+
+Search the trace backend for `4bf92f3577b34da6a3ce929d0e0e4736`, not Envoy's `x-request-id`.
+
+OTLP export is **off** by default (`management.tracing.export.otlp.enabled=false`), so the process does not dial a collector. Spans and `enduser.id` are still created, and incoming `traceparent` / B3 headers are still continued. Metrics stay on `/actuator/prometheus`. Turn export on with `MANAGEMENT_TRACING_EXPORT_OTLP_ENABLED=true`. The traces URL defaults to `http://localhost:4318/v1/traces` and can be overridden with `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`.
+
+Local process, with a collector on the host:
+
+```sh
+podman run --rm -p 4318:4318 -p 16686:16686 docker.io/jaegertracing/all-in-one:1.62.0
+
+MANAGEMENT_TRACING_EXPORT_OTLP_ENABLED=true ./mvnw spring-boot:run
+```
+
+The Jaeger UI is at <http://localhost:16686>. Search for the `traceId` from the JSON response.
+
+Podman app container. `localhost` inside that container is not the host, so put both containers on one network and point at the collector by name:
+
+```sh
+podman network create tracing
+podman run --rm --name jaeger --network tracing \
+  -p 4318:4318 -p 16686:16686 docker.io/jaegertracing/all-in-one:1.62.0
+
+podman run -it --rm --network tracing -p 8080:8080 \
+  -e MANAGEMENT_TRACING_EXPORT_OTLP_ENABLED=true \
+  -e OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://jaeger:4318/v1/traces \
+  ubi9-openjdk-21
+```
+
+Helm. Leave `tracing.enabled` false for a normal install. To export app spans to the same collector the mesh uses:
+
+```sh
+helm upgrade -i spring-boot-demo helm/spring-boot-demo \
+  --set tracing.enabled=true \
+  --set tracing.otlpEndpoint=http://otel-collector.observability.svc:4318/v1/traces
+```
+
+Sampling follows the parent. An unsampled `traceparent` from Istio drops the app spans even though `management.tracing.sampling.probability` is `1.0`. For a demo namespace, set the mesh `Telemetry` `randomSamplingPercentage` to `100` on the provider already configured under `extensionProviders` (the name below has to match that provider). `customTags` only decorates the Envoy span; the method spans come from the app.
+
+```yaml
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: otel-demo
+  namespace: spring-boot-demo
+spec:
+  tracing:
+  - randomSamplingPercentage: 100
+    providers:
+    - name: otel-tracing
+    customTags:
+      enduser.id:
+        header:
+          name: x-end-user
+```
+
+`/live`, `/ready`, and `/actuator/**` are not traced. `X-End-User` is spoofable; a real edge should set it from a verified token and strip any client-supplied value.
+
 ## Graceful shutdown (native sidecar)
 
 On OpenShift Service Mesh 3 / Istio native sidecars, Envoy stays up until **this process exits**. Istio `POST /drain` only GOAWAYs new connections; it does not finish in-flight work or wait for Istiod EDS. Configure the **application pod**, not `holdApplicationUntilProxyStarts` or `terminationDrainDuration` (leave both unset on apps). Details: [`native-sidecar-drain-test/README.md`](../../openshift-service-mesh/components/native-sidecar-drain-test/README.md).
