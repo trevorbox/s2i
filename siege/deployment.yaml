@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: siege-runner
+  labels:
+    app: siege-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: siege-runner
+  template:
+    metadata:
+      labels:
+        app: siege-runner
+    spec:
+      containers:
+        - name: siege
+          # Replace with your internal OpenShift image stream or external registry image
+          image: quay.io/trevorbox/ubi9-siege:latest
+          command: ["/bin/sh", "-c", "sleep infinity"]
+          env:
+            # Direct Siege to write .siege config/logs to the writable volume
+            - name: HOME
+              value: /tmp
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp-storage
+              mountPath: /tmp
+      volumes:
+        - name: tmp-storage
+          emptyDir: {}
